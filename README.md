@@ -6,6 +6,8 @@
 
 A powerful WhatsApp Web API library built on the Baileys architecture, enhanced with custom fixes, improved media handling, advanced newsletter support, and additional WhatsApp features.
 
+Based on **@whiskeysockets/baileys 7.0.0-rc14** (MIT). Source, issues and changelog: https://github.com/Qadeer-Xtech/stablebail
+
 Designed for developers who need a familiar Baileys-compatible API with extra functionality and a smoother development experience.
 
 ## 📦 Installation

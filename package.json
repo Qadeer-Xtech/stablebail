@@ -1,7 +1,7 @@
 {
   "name": "@qadeer-xtech/stablebail",
   "type": "module",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A WebSockets library for interacting with WhatsApp Web",
   "keywords": [
     "whatsapp",
@@ -14,7 +14,10 @@
   "files": [
     "lib/**/*",
     "WAProto/**/*",
-    "engine-requirements.js"
+    "engine-requirements.js",
+    "NOTICE",
+    "CHANGELOG.md",
+    "SECURITY.md"
   ],
   "scripts": {
     "build:all": "npm run build && npm run build:docs",
@@ -132,5 +135,13 @@
   "packageManager": "yarn@4.9.2",
   "engines": {
     "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Qadeer-Xtech/stablebail.git"
+  },
+  "homepage": "https://github.com/Qadeer-Xtech/stablebail#readme",
+  "bugs": {
+    "url": "https://github.com/Qadeer-Xtech/stablebail/issues"
   }
 }
