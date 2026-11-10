@@ -28,6 +28,17 @@ Official rc14 mein channel ke ye hisse adhoore ya toote hue thay — 1.0.2 mein 
 
 Purana `newsletterFetchMessages(jid, count, since, after)` wala andaaz bhi chalta rahega — library khud samajh jati hai.
 
+## 1.0.3 mein kya fix hai (Media Stream Download)
+
+rc14 (aur official master) mein media STREAM download ke ye hisse toote hue thay — 1.0.3 mein theek hain:
+
+- **Stream error aage jata hai** — download darmiyan mein kate to pehle stream hamesha ke liye hang ho jati thi aur process par uncaughtException ata tha; ab error caller ko milta hai, download saaf fail hota hai, hang nahi (official issue #2750).
+- **Purani media par reupload** — CDN 404/410 de to bot phone se reupload mangta hai; fetch (undici) migration ke baad status check kharab tha, reupload kabhi manga hi nahi jata tha (official issue #2767).
+- **Expire link (403) par bhi reupload** — signed media link expire ho jaye (oe param) to 403 ata tha aur media hamesha ke liye fail; ab WhatsApp Web ki tarah reupload se naya link ata hai.
+- **mediaKey string wala bug** — database/JSON se restore hue messages ki mediaKey base64 string hoti thi, jis se retry decryption fail hoti thi; ab pehle bytes mein badalti hai.
+
+Baaki sab kuch 1.0.2 wala hi hai — API mein koi tabdeeli nahi, purana code waisa hi chalega.
+
 ## Bot mein istemal
 
 ```js
@@ -74,7 +85,8 @@ await sock.newsletterReactMessage(channel.id, updates[0].server_id, '❤️')
 
 ## Versions
 
-- **1.0.2** — Channels/newsletter fixes (upar wali list)
+- **1.0.3** — Media stream download fixes (upar wali list)
+- **1.0.2** — Channels/newsletter fixes
 - **1.0.1** — Dependencies apne packages par: `@qadeer-xtech/libsignal`, `@qadeer-xtech/whatsapp-rust-bridge`
 - **1.0.0** — Official Baileys 7.0.0-rc14 ki saaf copy
 
