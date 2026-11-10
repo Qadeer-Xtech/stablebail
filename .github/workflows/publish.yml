@@ -1,0 +1,22 @@
+name: Publish
+
+# Manual publish with npm provenance. Requires a one-time
+# trusted-publisher setup for @qadeer-xtech/stablebail on npmjs.com
+# (package Settings -> Trusted Publisher -> this repo + workflow).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm publish --provenance --access public

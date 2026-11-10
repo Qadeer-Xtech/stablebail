@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pack the package
+        run: npm pack
+      - name: Install the tarball in a clean project and smoke-test imports
+        run: |
+          mkdir -p /tmp/smoke && cd /tmp/smoke
+          npm init -y > /dev/null
+          npm install "$GITHUB_WORKSPACE"/qadeer-xtech-stablebail-*.tgz
+          node --input-type=module -e "
+            import * as B from '@qadeer-xtech/stablebail';
+            const n = Object.keys(B).length;
+            console.log('exports:', n);
+            if (typeof B.default !== 'function') throw new Error('default export (makeWASocket) missing');
+            if (n < 200) throw new Error('suspiciously few exports: ' + n);
+            console.log('smoke OK');
+          "

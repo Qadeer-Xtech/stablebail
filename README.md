@@ -8,6 +8,33 @@ A powerful WhatsApp Web API library built on the Baileys architecture, enhanced 
 
 Based on **@whiskeysockets/baileys 7.0.0-rc14** (MIT). Source, issues and changelog: https://github.com/Qadeer-Xtech/stablebail
 
+[![CI](https://github.com/Qadeer-Xtech/stablebail/actions/workflows/ci.yml/badge.svg)](https://github.com/Qadeer-Xtech/stablebail/actions/workflows/ci.yml)
+
+## Why StableBail instead of stock Baileys?
+
+Same API — StableBail is Baileys 7.0.0-rc14 plus reviewed fixes that
+upstream has not released yet:
+
+| Area | Stock rc14 | StableBail |
+|---|---|---|
+| Media reupload on 403/404/410 | broken | fixed (1.0.3) |
+| Stream drops ~50 min (status ack) | broken | fixed (1.0.7) |
+| Pairing code 515 failures | broken | fixed (1.0.7) |
+| creds.json corruption on crash | possible | atomic writes (1.0.7) |
+| Channel (newsletter) media | often invisible | fixed paths (1.0.2 + 1.0.7) |
+| Status mentions | not available | `sendStatusMention` (1.0.5) |
+| Retry double-encryption | present | fixed (1.0.7) |
+
+Full per-version list: [CHANGELOG.md](CHANGELOG.md) · Plans: [ROADMAP.md](ROADMAP.md) · Runnable samples: [examples/](examples/)
+
+## Switching from official Baileys (1 minute)
+
+Change only the dependency line — your code stays the same:
+
+```json
+"@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.7"
+```
+
 Designed for developers who need a familiar Baileys-compatible API with extra functionality and a smoother development experience.
 
 ## 📦 Installation
