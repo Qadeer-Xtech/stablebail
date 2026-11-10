@@ -34,6 +34,9 @@ export declare const makeMessagesSocket: (config: SocketConfig) => {
     updateMemberLabel: (jid: string, memberLabel: string) => Promise<string>;
     updateMediaMessage: (message: WAMessage) => Promise<WAMessage>;
     sendMessage: (jid: string, content: AnyMessageContent, options?: MiscMessageGenerationOptions) => Promise<WAMessage | undefined>;
+    sendStatusMention: (jidList: string[], content: AnyMessageContent, options?: MiscMessageGenerationOptions & {
+        delayMs?: number;
+    }) => Promise<WAMessage>;
     newsletterCreate: (name: string, description?: string) => Promise<import("../Types/index.js").NewsletterMetadata>;
     newsletterUpdate: (jid: string, updates: import("../Types/index.js").NewsletterUpdate) => Promise<unknown>;
     newsletterSubscribers: (jid: string) => Promise<{
@@ -196,4 +199,19 @@ export declare const makeMessagesSocket: (config: SocketConfig) => {
     fetchAccountReachoutTimelock: () => Promise<import("../Types/index.js").ReachoutTimelockState>;
     fetchNewChatMessageCap: () => Promise<import("../Types/index.js").NewChatMessageCapInfo>;
 };
-//# sourceMappingURL=messages-send.d.ts.map
+export type StatusMentionDeps = {
+    logger: SocketConfig['logger'];
+    config: SocketConfig;
+    userJid: string;
+    waUploadToServer: import("../Types/index.js").WAMediaUploadFunction;
+    relayMessage: (jid: string, message: proto.IMessage, options: MessageRelayOptions) => Promise<string>;
+    groupMetadata: (jid: string) => Promise<import("../Types/index.js").GroupMetadata>;
+    cachedGroupMetadata?: SocketConfig['cachedGroupMetadata'];
+    upsertMessage: (...args: any[]) => Promise<any>;
+    messageMutex: {
+        mutex: <T>(code: () => Promise<T> | T) => Promise<T>;
+    };
+};
+export declare const sendStatusMentionImpl: (deps: StatusMentionDeps, jidList: string[], content: AnyMessageContent, options?: MiscMessageGenerationOptions & {
+    delayMs?: number;
+}) => Promise<WAMessage>;

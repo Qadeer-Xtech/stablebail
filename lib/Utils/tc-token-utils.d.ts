@@ -33,5 +33,6 @@ type StoreTcTokensParams = {
     onNewJidStored?: (jid: string) => void;
 };
 export declare function storeTcTokensFromIqResult({ result, fallbackJid, keys, getLIDForPN, onNewJidStored }: StoreTcTokensParams): Promise<void>;
+/** Client-side fallback token when the recipient hasn't issued a tctoken. Mirrors WA Web genCsTokenBody. */
+export declare function computeCsToken(nctSalt: Uint8Array, recipientLid: string): Uint8Array;
 export {};
-//# sourceMappingURL=tc-token-utils.d.ts.map

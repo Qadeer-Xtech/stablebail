@@ -1,111 +1,321 @@
-# @qadeer-xtech/stablebail
+@qadeer-xtech/stablebail
 
-WhatsApp Web API library — Team Qadeer ki apni copy, official Baileys 7.0.0-rc14 par mabni, channels (newsletter) ke fixes ke sath.
+<p align="center">
+  **STABLEBAIL — POWERED BY TEAM QADEER**
+</p>
 
-## Install
+A powerful WhatsApp Web API library built on the Baileys architecture, enhanced with custom fixes, improved media handling, advanced newsletter support, and additional WhatsApp features.
 
-```
+Designed for developers who need a familiar Baileys-compatible API with extra functionality and a smoother development experience.
+
+## 📦 Installation
+
+```bash
 npm install @qadeer-xtech/stablebail
 ```
 
-Bot ke `package.json` mein official naam ke tor par:
+## Use as Official Baileys Replacement
+
+To use StableBail without changing your existing import paths, add this alias to your "package.json":
 
 ```json
-"@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@latest"
-```
-
-## 1.0.2 mein kya fix hai (Channels / Newsletter)
-
-Official rc14 mein channel ke ye hisse adhoore ya toote hue thay — 1.0.2 mein theek hain:
-
-- **Channel messages parhna** — `newsletterFetchMessages` ab WA Web wale asal tareeqe se kaam karta hai aur messages ko decode karke saaf list deta hai (pehle khaali khaam jawab aata tha)
-- **Channel par media bhejna** — newsletter ke liye alag media upload rasta (`NEWSLETTER_MEDIA_PATH_MAP` + server thumbnail) lagaya hai; pehle channel par media ghalat raste se ja kar atak jata tha
-- **Subscribed channels ki list** — naya `newsletterSubscribed()` (aur `newsletterFetchAllSubscribe()`), bilkul `groupFetchAllParticipating` ki tarah
-- **Link se channel maloom karna** — naya `newsletterFromUrl(url)`: channel ke invite link se seedha metadata
-- **Views aur reactions** — naya `newsletterFetchUpdates(jid)`: har message ke views count aur reactions ki list
-- **Reaction mode** — naya `newsletterReactionMode(jid, mode)`: apne channel ki reaction setting badlein
-- **Crash fix** — jis channel ki picture na ho, us ki metadata par ab crash nahi hota
-
-Purana `newsletterFetchMessages(jid, count, since, after)` wala andaaz bhi chalta rahega — library khud samajh jati hai.
-
-## 1.0.3 mein kya fix hai (Media Stream Download)
-
-rc14 (aur official master) mein media STREAM download ke ye hisse toote hue thay — 1.0.3 mein theek hain:
-
-- **Stream error aage jata hai** — download darmiyan mein kate to pehle stream hamesha ke liye hang ho jati thi aur process par uncaughtException ata tha; ab error caller ko milta hai, download saaf fail hota hai, hang nahi (official issue #2750).
-- **Purani media par reupload** — CDN 404/410 de to bot phone se reupload mangta hai; fetch (undici) migration ke baad status check kharab tha, reupload kabhi manga hi nahi jata tha (official issue #2767).
-- **Expire link (403) par bhi reupload** — signed media link expire ho jaye (oe param) to 403 ata tha aur media hamesha ke liye fail; ab WhatsApp Web ki tarah reupload se naya link ata hai.
-- **mediaKey string wala bug** — database/JSON se restore hue messages ki mediaKey base64 string hoti thi, jis se retry decryption fail hoti thi; ab pehle bytes mein badalti hai.
-
-Baaki sab kuch 1.0.2 wala hi hai — API mein koi tabdeeli nahi, purana code waisa hi chalega.
-
-## 1.0.4 mein kya fix hai (Official issues + WhatsApp Web matching)
-
-Ye fixes official rc14 (2026-07-29) ke baad ki haqiqat ke mutabiq hain — WhatsApp Web deep research + official GitHub issues se verify karke:
-
-- **WIN_HYBRID pehchan (official PR #2741, issue #2677)** — WhatsApp ne purana WIN32 sub-platform retire kar diya hai: jo client WIN32 bhejta hai, server us ka handshake **428** se foran band kar deta hai (nayi pairing bhi, purane session ka reconnect bhi). Ab Windows/Desktop pehchan WIN_HYBRID jati hai.
-- **WhatsApp version pin taza** — default version 2.3000.1048663002 kar diya. Purana pin pairing ko khamoshi se fail karta tha (phone par "Couldn't link device", socket par 408 / 405 client_too_old).
-- **onWhatsApp ab LID par bhi kaam karta hai (official issue #1522)** — pehle @lid dete hi khali jawab ata tha. Ab pehle local LID<->number mapping se number nikala jata hai, phir aam check chalta hai aur jawab mein `lid` bhi milta hai: `{ jid, exists, lid }`. Jis LID ki mapping bot ke paas maujud hi nahi, wo pehle ki tarah skip hoti hai (ghalat exists:false nahi jata).
-
-Imandari wali note:
-- Channel photo wala issue (#2199) stock rc9 par report hua tha — dedicated newsletter upload paths (jo is maslay ka hal hain) stablebail 1.0.2 se pehle hi maujud hain. Live bot par phir bhi masla aye to agli mashkook cheez MediaHandle hai — live capture ke baghair us par haath nahi dala, taake chalta hua kaam na toote.
-- Passkey wala prompt (#2672) WhatsApp ke server ka linking-time flow hai; is ka hal library ke andar mumkin nahi (bahar ka WebAuthn signer chahiye hota hai). Pehle se pair shuda sessions par is ka asar nahi — "connect nahi hota" ki zyada tar shikayatein asal mein upar wala 428/WIN32 masla hain, jo is version mein fix hai.
-- Bad MAC (#1769), 405/463, bar bar disconnect — ye zyada tar server-side/account-side clusters hain; in par koi jhooti "fix" nahi dali gayi. App-state resilience wali official fix (PR #2456) rc14 mein pehle se shamil hai.
-
-Baaki sab 1.0.3 wala hi hai (stream download fixes + channel fixes) — API mein koi tabdeeli nahi.
-
-## Bot mein istemal
-
-```js
-const makeWASocket = require('@qadeer-xtech/stablebail').default
-const { useMultiFileAuthState, DisconnectReason } = require('@qadeer-xtech/stablebail')
-
-async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info')
-    const sock = makeWASocket({ auth: state, printQRInTerminal: true })
-    sock.ev.on('creds.update', saveCreds)
-    return sock
+{
+  "dependencies": {
+    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@latest"
+  }
 }
 ```
 
-## Channel (Newsletter) ki misalein
+This allows existing Baileys-based projects to use StableBail while keeping their original package imports.
+
+## ✨ Key Features
+
+- Baileys-Compatible API — Familiar socket methods and existing Baileys workflow.
+- Newsletter Enhancements — Improved channel messaging, media uploads, subscriptions, and metadata fetching.
+- Media Stream Fixes — Improved download error handling, media retries, and expired-link recovery.
+- Windows Hybrid Support — Updated device identification for modern WhatsApp connections.
+- LID Compatibility — Improved "onWhatsApp()" support for LID-based addresses.
+- Status Mentions — Mention contacts and groups in WhatsApp status updates.
+- CSToken / NCT Support — Additional token handling for LID-addressed messaging.
+- Connection Banner — Optional branded startup banner.
+- Improved Stability — Additional fixes for connection handling and media operations.
+
+## 🔧 What's Included
+
+### 1. Newsletter / Channel Support
+
+Extended newsletter functionality with improved message fetching, media handling, and channel metadata support.
+
+Available methods:
+
+| Method | Description |
+| --- | --- |
+| "newsletterFromUrl()" | Fetch channel information from an invite link |
+| "newsletterSubscribed()" | Get subscribed channels |
+| "newsletterFetchAllSubscribe()" | Fetch all subscribed channels |
+| "newsletterFetchMessages()" | Retrieve channel messages |
+| "newsletterFetchUpdates()" | Fetch views and reactions |
+| "newsletterReactionMode()" | Change channel reaction settings |
+| "newsletterFollow()" | Follow a channel |
+| "newsletterUnfollow()" | Unfollow a channel |
+| "newsletterReactMessage()" | React to channel messages |
+
+Additional improvements:
+
+- Dedicated newsletter media upload handling.
+- Improved channel message decoding.
+- Better thumbnail handling.
+- Protection against missing channel profile pictures.
+- Support for legacy message-fetching arguments.
+
+### 2. Media Streaming Improvements
+
+Enhanced media download and retry handling.
+
+- Proper stream error propagation.
+- Prevents downloads from remaining stuck after stream failures.
+- Improved recovery for expired media links.
+- Handles CDN "403", "404", and "410" responses.
+- Improved phone-based media reupload handling.
+- Automatically converts Base64 media keys into usable byte data when required.
+
+### 3. Connection & Device Compatibility
+
+- Updated Windows device identification using "WIN_HYBRID".
+- Updated default WhatsApp Web version configuration.
+- Improved LID address handling in "onWhatsApp()".
+- Returns LID information alongside standard WhatsApp lookup results when available.
+
+Example response:
 
 ```js
-// Link se channel ki maloomat
-const channel = await sock.newsletterFromUrl('https://whatsapp.com/channel/0029VbCCK3T5PO17Wu4r8U1A')
-console.log(channel.id, channel.name, channel.subscribers)
-
-// Follow / unfollow
-await sock.newsletterFollow(channel.id)
-await sock.newsletterUnfollow(channel.id)
-
-// Mere saare subscribed channels
-const list = await sock.newsletterSubscribed()
-
-// Channel ke messages parhna (naya tareeqa / purana tareeqa — dono chalte hain)
-const msgs = await sock.newsletterFetchMessages('jid', channel.id, 20)
-const msgsOld = await sock.newsletterFetchMessages(channel.id, 20)
-
-// Views + reactions
-const updates = await sock.newsletterFetchUpdates(channel.id, 20)
-console.log(updates[0].server_id, updates[0].views, updates[0].reactions)
-
-// Channel par message / media bhejna (apna channel ho to)
-await sock.sendMessage(channel.id, { text: 'Assalam o Alaikum!' })
-await sock.sendMessage(channel.id, { image: { url: 'https://example.com/pic.jpg' }, caption: 'Nayi post' })
-
-// Kisi message par reaction
-await sock.newsletterReactMessage(channel.id, updates[0].server_id, '❤️')
+{
+  jid,
+  exists,
+  lid
+}
 ```
 
-## Versions
+### 4. Status Mentions
 
-- **1.0.4** — Official-issue fixes: WIN_HYBRID pehchan, version pin, onWhatsApp LID (upar wali list)
-- **1.0.3** — Media stream download fixes
-- **1.0.2** — Channels/newsletter fixes
-- **1.0.1** — Dependencies apne packages par: `@qadeer-xtech/libsignal`, `@qadeer-xtech/whatsapp-rust-bridge`
-- **1.0.0** — Official Baileys 7.0.0-rc14 ki saaf copy
+StableBail includes "sendStatusMention()" for mentioning contacts or groups in WhatsApp status updates.
 
-## License
+Mention individual contacts:
 
-MIT
+```js
+await sock.sendStatusMention(
+    [
+        '923001234567@s.whatsapp.net',
+        '923009876543@s.whatsapp.net'
+    ],
+    {
+        text: 'Eid Mubarak! 🌙'
+    }
+)
+```
+
+Mention a group:
+
+```js
+await sock.sendStatusMention(
+    ['120363000000000000@g.us'],
+    {
+        image: {
+            url: 'https://example.com/pic.jpg'
+        },
+        caption: 'Team Qadeer'
+    },
+    {
+        delayMs: 1500
+    }
+)
+```
+
+"delayMs" controls the delay between mention operations. Its default value is "1500" milliseconds.
+
+### 5. CSToken / NCT Support
+
+Additional support for WhatsApp's NCT and contact token handling.
+
+- Collects NCT salt through history and app-state synchronization.
+- Stores available NCT salt in authentication credentials.
+- Supports regular-high synchronization when history synchronization is disabled.
+- Computes CSToken using HMAC-SHA256 when a required token is unavailable.
+- Prioritizes existing TCToken data when available.
+- Adds additional token handling for LID-addressed messaging.
+
+The library also exposes existing reach-out timelock information through:
+
+```js
+sock.fetchAccountReachoutTimelock()
+```
+
+And the connection update event can provide "reachoutTimeLock" information.
+
+### 6. Custom Connection Banner
+
+StableBail includes an optional branded connection banner.
+
+```
+╭───────────────────────────╮
+│      ✦ Q A D E E R ✦      │
+│ stablebail • Qadeer-Xtech │
+╰───────────────────────────╯
+```
+
+The banner is displayed once when the connection opens.
+
+To disable it:
+
+```js
+const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true,
+    banner: false
+})
+```
+
+## 🚀 Basic Usage
+
+```js
+const makeWASocket =
+    require('@qadeer-xtech/stablebail').default
+
+const {
+    useMultiFileAuthState,
+    DisconnectReason
+} = require('@qadeer-xtech/stablebail')
+
+async function startBot() {
+    const { state, saveCreds } =
+        await useMultiFileAuthState('auth_info')
+
+    const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: true
+    })
+
+    sock.ev.on('creds.update', saveCreds)
+
+    return sock
+}
+
+startBot()
+```
+
+## 📡 Newsletter Examples
+
+Fetch Channel Information
+
+```js
+const channel = await sock.newsletterFromUrl(
+    'https://whatsapp.com/channel/CHANNEL_ID'
+)
+
+console.log(
+    channel.id,
+    channel.name,
+    channel.subscribers
+)
+```
+
+Follow / Unfollow
+
+```js
+await sock.newsletterFollow(channel.id)
+
+await sock.newsletterUnfollow(channel.id)
+```
+
+Get Subscribed Channels
+
+```js
+const channels = await sock.newsletterSubscribed()
+
+console.log(channels)
+```
+
+Fetch Channel Messages
+
+```js
+const messages = await sock.newsletterFetchMessages(
+    channel.id,
+    20
+)
+
+console.log(messages)
+```
+
+Fetch Views & Reactions
+
+```js
+const updates = await sock.newsletterFetchUpdates(
+    channel.id,
+    20
+)
+
+console.log(
+    updates[0].server_id,
+    updates[0].views,
+    updates[0].reactions
+)
+```
+
+Send Channel Message
+
+```js
+await sock.sendMessage(channel.id, {
+    text: 'Assalam o Alaikum! 👋'
+})
+```
+
+Send Channel Image
+
+```js
+await sock.sendMessage(channel.id, {
+    image: {
+        url: 'https://example.com/pic.jpg'
+    },
+    caption: 'New Channel Update'
+})
+```
+
+React to Channel Message
+
+```js
+await sock.newsletterReactMessage(
+    channel.id,
+    updates[0].server_id,
+    '❤️'
+)
+```
+
+## ⚙️ Compatibility
+
+- Node.js environment
+- Baileys-compatible socket workflow
+- Existing Baileys-based bot projects
+- Multi-file authentication
+- WhatsApp Web connection workflows
+
+StableBail is designed to minimize migration work for existing Baileys users. However, custom methods and options are specific to this package.
+
+## ⚠️ Important Notes
+
+- Some custom features may require live WhatsApp testing.
+- Status mention functionality should be tested with a dedicated account before production use.
+- WhatsApp may change its internal protocols without notice.
+- Connection restrictions, account-level limitations, and server-side errors cannot always be resolved through library-side changes.
+- Always keep your authentication credentials private.
+
+## 📄 License
+
+MIT License
+
+## 🖤 Credits
+
+Developed and maintained by Team Qadeer.
+
+STABLEBAIL — Built for developers. Enhanced for performance.
+
+"Powered by Team Qadeer"

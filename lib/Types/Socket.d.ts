@@ -59,6 +59,8 @@ export type SocketConfig = {
      * @deprecated This feature has been removed
      */
     printQRInTerminal?: boolean;
+    /** stablebail banner connection open hone par aik dafa print hota hai — band karne ke liye false (default: true) */
+    banner?: boolean;
     /** should events be emitted for actions done by this socket connection */
     emitOwnEvents: boolean;
     /** custom upload hosts to upload media to */
@@ -133,4 +135,3 @@ export type SocketConfig = {
     cachedGroupMetadata: (jid: string) => Promise<GroupMetadata | undefined>;
     makeSignalRepository: (auth: SignalAuthState, logger: ILogger, pnToLIDFunc?: (jids: string[]) => Promise<LIDMapping[] | undefined>) => SignalRepositoryWithLIDStore;
 };
-//# sourceMappingURL=Socket.d.ts.map
