@@ -39,6 +39,21 @@ rc14 (aur official master) mein media STREAM download ke ye hisse toote hue thay
 
 Baaki sab kuch 1.0.2 wala hi hai — API mein koi tabdeeli nahi, purana code waisa hi chalega.
 
+## 1.0.4 mein kya fix hai (Official issues + WhatsApp Web matching)
+
+Ye fixes official rc14 (2026-07-29) ke baad ki haqiqat ke mutabiq hain — WhatsApp Web deep research + official GitHub issues se verify karke:
+
+- **WIN_HYBRID pehchan (official PR #2741, issue #2677)** — WhatsApp ne purana WIN32 sub-platform retire kar diya hai: jo client WIN32 bhejta hai, server us ka handshake **428** se foran band kar deta hai (nayi pairing bhi, purane session ka reconnect bhi). Ab Windows/Desktop pehchan WIN_HYBRID jati hai.
+- **WhatsApp version pin taza** — default version 2.3000.1048663002 kar diya. Purana pin pairing ko khamoshi se fail karta tha (phone par "Couldn't link device", socket par 408 / 405 client_too_old).
+- **onWhatsApp ab LID par bhi kaam karta hai (official issue #1522)** — pehle @lid dete hi khali jawab ata tha. Ab pehle local LID<->number mapping se number nikala jata hai, phir aam check chalta hai aur jawab mein `lid` bhi milta hai: `{ jid, exists, lid }`. Jis LID ki mapping bot ke paas maujud hi nahi, wo pehle ki tarah skip hoti hai (ghalat exists:false nahi jata).
+
+Imandari wali note:
+- Channel photo wala issue (#2199) stock rc9 par report hua tha — dedicated newsletter upload paths (jo is maslay ka hal hain) stablebail 1.0.2 se pehle hi maujud hain. Live bot par phir bhi masla aye to agli mashkook cheez MediaHandle hai — live capture ke baghair us par haath nahi dala, taake chalta hua kaam na toote.
+- Passkey wala prompt (#2672) WhatsApp ke server ka linking-time flow hai; is ka hal library ke andar mumkin nahi (bahar ka WebAuthn signer chahiye hota hai). Pehle se pair shuda sessions par is ka asar nahi — "connect nahi hota" ki zyada tar shikayatein asal mein upar wala 428/WIN32 masla hain, jo is version mein fix hai.
+- Bad MAC (#1769), 405/463, bar bar disconnect — ye zyada tar server-side/account-side clusters hain; in par koi jhooti "fix" nahi dali gayi. App-state resilience wali official fix (PR #2456) rc14 mein pehle se shamil hai.
+
+Baaki sab 1.0.3 wala hi hai (stream download fixes + channel fixes) — API mein koi tabdeeli nahi.
+
 ## Bot mein istemal
 
 ```js
@@ -85,7 +100,8 @@ await sock.newsletterReactMessage(channel.id, updates[0].server_id, '❤️')
 
 ## Versions
 
-- **1.0.3** — Media stream download fixes (upar wali list)
+- **1.0.4** — Official-issue fixes: WIN_HYBRID pehchan, version pin, onWhatsApp LID (upar wali list)
+- **1.0.3** — Media stream download fixes
 - **1.0.2** — Channels/newsletter fixes
 - **1.0.1** — Dependencies apne packages par: `@qadeer-xtech/libsignal`, `@qadeer-xtech/whatsapp-rust-bridge`
 - **1.0.0** — Official Baileys 7.0.0-rc14 ki saaf copy
