@@ -16,7 +16,19 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     newsletterUpdatePicture: (jid: string, content: WAMediaUpload) => Promise<unknown>;
     newsletterRemovePicture: (jid: string) => Promise<unknown>;
     newsletterReactMessage: (jid: string, serverId: string, reaction?: string) => Promise<void>;
-    newsletterFetchMessages: (jid: string, count: number, since: number, after: number) => Promise<any>;
+    newsletterFetchMessages: (typeOrJid: string, keyOrCount: string | number, count?: number, after?: number, before?: number) => Promise<any>;
+    newsletterFetchUpdates: (jid: string, count?: number, after?: number, since?: number) => Promise<{
+        server_id: string;
+        views: number;
+        reactions: {
+            count: number;
+            code: string;
+        }[];
+    }[]>;
+    newsletterSubscribed: () => Promise<unknown>;
+    newsletterFetchAllSubscribe: () => Promise<unknown>;
+    newsletterFromUrl: (url: string) => Promise<NewsletterMetadata | null>;
+    newsletterReactionMode: (jid: string, mode: string) => Promise<unknown>;
     subscribeNewsletterUpdates: (jid: string) => Promise<{
         duration: string;
     } | null>;
@@ -167,4 +179,3 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     fetchNewChatMessageCap: () => Promise<import("../index.js").NewChatMessageCapInfo>;
 };
 export type NewsletterSocket = ReturnType<typeof makeNewsletterSocket>;
-//# sourceMappingURL=newsletter.d.ts.map

@@ -13,6 +13,7 @@ export declare enum XWAPaths {
     xwa2_newsletter_change_owner = "xwa2_newsletter_change_owner",
     xwa2_newsletter_demote = "xwa2_newsletter_demote",
     xwa2_newsletter_delete_v2 = "xwa2_newsletter_delete_v2",
+    xwa2_newsletter_subscribed = "xwa2_newsletter_subscribed",
     xwa2_fetch_account_reachout_timelock = "xwa2_fetch_account_reachout_timelock",
     xwa2_message_capping_info = "xwa2_message_capping_info"
 }
@@ -21,6 +22,7 @@ export declare enum QueryIds {
     UPDATE_METADATA = "24250201037901610",
     METADATA = "6563316087068696",
     SUBSCRIBERS = "9783111038412085",
+    SUBSCRIBED = "6388546374527196",
     FOLLOW = "24404358912487870",
     UNFOLLOW = "9767147403369991",
     MUTE = "29766401636284406",
@@ -138,4 +140,3 @@ export interface NewsletterMetadata {
         description?: string;
     };
 }
-//# sourceMappingURL=Mex.d.ts.map

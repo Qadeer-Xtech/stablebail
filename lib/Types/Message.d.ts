@@ -264,6 +264,7 @@ export type WAMediaUploadFunction = (encFilePath: string, opts: {
     fileEncSha256B64: string;
     mediaType: MediaType;
     timeoutMs?: number;
+    newsletter?: boolean;
 }) => Promise<{
     mediaUrl: string;
     directPath: string;
@@ -317,4 +318,3 @@ export type MediaDecryptionKeyInfo = {
     macKey?: Uint8Array;
 };
 export type MinimalMessage = Pick<WAMessage, 'key' | 'messageTimestamp'>;
-//# sourceMappingURL=Message.d.ts.map

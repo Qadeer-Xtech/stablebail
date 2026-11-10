@@ -130,4 +130,3 @@ export declare const decryptMediaRetryData: ({ ciphertext, iv }: {
 }, mediaKey: Uint8Array, msgId: string) => proto.MediaRetryNotification;
 export declare const getStatusCodeForMediaRetry: (code: number) => 200 | 412 | 404 | 418;
 export {};
-//# sourceMappingURL=messages-media.d.ts.map
