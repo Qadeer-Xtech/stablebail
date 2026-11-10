@@ -28,6 +28,26 @@ To use StableBail without changing your existing import paths, add this alias to
 
 This allows existing Baileys-based projects to use StableBail while keeping their original package imports.
 
+## ✅ Recommended Settings for Bot Projects
+
+For a smooth, error-free install, use these exact settings in your bot's "package.json":
+
+```json
+{
+  "dependencies": {
+    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.6",
+    "sharp": "0.35.5",
+    "wa-sticker-formatter": "4.4.4"
+  },
+  "overrides": {
+    "sharp": "$sharp"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
+```
+
 ## ✨ Key Features
 
 - Baileys-Compatible API — Familiar socket methods and existing Baileys workflow.
