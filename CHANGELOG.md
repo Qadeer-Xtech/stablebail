@@ -3,6 +3,16 @@
 Based on **@whiskeysockets/baileys 7.0.0-rc14**. Only the changes made
 on top of the official release are listed here.
 
+## 1.0.8
+- README: the licence section now describes the dual licence
+  correctly, and dependency-transparency links were added.
+- The libsignal and whatsapp-rust-bridge republishes now have
+  public repositories whose DIFF.md files document that their
+  code is byte-identical to upstream.
+- First release published from the GitHub Actions workflow using
+  npm trusted publishing (OIDC), with provenance attestation.
+- No library code changes in this release.
+
 ## 1.0.7
 - Public GitHub repository: https://github.com/Qadeer-Xtech/stablebail
   (package.json now carries repository / homepage / bugs links).
