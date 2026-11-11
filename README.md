@@ -359,7 +359,20 @@ StableBail is designed to minimize migration work for existing Baileys users. Ho
 
 ## 📄 License
 
-MIT License
+Dual licence — see the [LICENSE](LICENSE) file: **Part 1** is the
+upstream MIT License (Baileys / WhiskeySockets); **Part 2** adds the
+Team Qadeer terms for the fixes, extensions and branding in
+StableBail. The [NOTICE](NOTICE) file ships with the package and
+must be retained.
+
+## Dependencies
+
+The two core dependencies are faithful republishes under the same
+scope, with code **byte-identical** to upstream (proof in each
+repo's DIFF.md):
+
+- [@qadeer-xtech/libsignal](https://github.com/Qadeer-Xtech/libsignal) — of official libsignal 6.0.0
+- [@qadeer-xtech/whatsapp-rust-bridge](https://github.com/Qadeer-Xtech/whatsapp-rust-bridge) — of official whatsapp-rust-bridge 0.5.4
 
 ## 🖤 Credits
 
