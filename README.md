@@ -32,7 +32,7 @@ Full per-version list: [CHANGELOG.md](CHANGELOG.md) · Plans: [ROADMAP.md](ROADM
 Change only the dependency line — your code stays the same:
 
 ```json
-"@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.9"
+"@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@latest"
 ```
 
 Designed for developers who need a familiar Baileys-compatible API with extra functionality and a smoother development experience.
@@ -73,7 +73,7 @@ For a smooth, error-free install, use these exact settings in your bot's "packag
 ```json
 {
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.9",
+    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.10",
     "sharp": "0.35.5",
     "wa-sticker-formatter": "4.4.4"
   },
