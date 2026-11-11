@@ -3,6 +3,17 @@
 Based on **@whiskeysockets/baileys 7.0.0-rc14**. Only the changes made
 on top of the official release are listed here.
 
+## 1.0.10
+- Test infrastructure: the repository now ships the jest
+  configuration for the included unit test suite - `npm test`
+  runs 28 suites / 407 tests, all passing (identical result on
+  the pristine upstream baseline), and CI runs the unit tests
+  on every push.
+- README: the source-verification claim now states precisely
+  what is byte-identical (the compiled JavaScript), and the
+  switching example pin was updated.
+- No library code changes in this release.
+
 ## 1.0.9
 - Fix: onWhatsApp LID lookups now return the `lid` field. The
   internal PN-to-LID map key was malformed (`user@@s.whatsapp.net`)
