@@ -37,6 +37,13 @@ Change only the dependency line — your code stays the same:
 
 Designed for developers who need a familiar Baileys-compatible API with extra functionality and a smoother development experience.
 
+## TypeScript source
+
+The full TypeScript source of this package is in
+[`src/`](src/). It is **build-verified**: compiling it with the
+included tsconfig reproduces the shipped `lib/` byte-for-byte,
+so what you read here is exactly what runs.
+
 ## 📦 Installation
 
 ```bash
