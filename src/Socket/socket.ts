@@ -55,7 +55,7 @@ import {
 	isLidUser,
 	jidDecode,
 	jidEncode,
-	type JidServer,
+	jidNormalizedUser,
 	S_WHATSAPP_NET
 } from '../WABinary'
 import { BinaryInfo } from '../WAM/BinaryInfo.js'
@@ -336,6 +336,11 @@ export const makeSocket = (config: SocketConfig) => {
 		// local LID<->PN mapping se number nikalo, phir aam contact query
 		// chalao aur jawab mein lid bhi wapas lagao. Mapping na mile to
 		// purana behavior (skip) — ghalat exists:false nahi bhejna.
+		// 1.0.9 fix: 1.0.4 mein map ki key jidEncode(user, S_WHATSAPP_NET)
+		// se banti thi — S_WHATSAPP_NET '@s.whatsapp.net' hai aur jidEncode
+		// khud '@' lagata hai, to key 'user@@s.whatsapp.net' ban jati thi
+		// aur result id se kabhi match nahi hoti thi (lid kabhi attach
+		// nahi hota tha). Ab canonical key jidNormalizedUser se banti hai.
 		const resolvedLids = new Map<string, string>()
 		const addPhone = (phoneJid: string) => {
 			if (!contactEnabled) {
@@ -355,8 +360,7 @@ export const makeSocket = (config: SocketConfig) => {
 				} catch { /* mapping store band/fail — neeche skip */ }
 
 				if (pn) {
-					const pnDecoded = jidDecode(pn)
-					resolvedLids.set(pnDecoded ? jidEncode(pnDecoded.user, S_WHATSAPP_NET as string as JidServer) : pn, jid) // result ki id device-bagair ati hai, key match ke liye normalize
+					resolvedLids.set(jidNormalizedUser(pn) || pn, jid) // result ki id device-bagair ati hai, key match ke liye normalize
 					addPhone(pn)
 				} else {
 					logger?.warn('onWhatsApp: is LID ki koi PN mapping nahi mili, skip kar raha hun')

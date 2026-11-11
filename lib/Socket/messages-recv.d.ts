@@ -37,13 +37,19 @@ export declare const makeMessagesRecvSocket: (config: SocketConfig) => {
     })[]>;
     updateMemberLabel: (jid: string, memberLabel: string) => Promise<string>;
     updateMediaMessage: (message: WAMessage) => Promise<WAMessage>;
+    sendStatusMention: (jidList: string[], content: import("../Types/index.js").AnyMessageContent, options?: import("../Types/index.js").MiscMessageGenerationOptions & {
+        delayMs?: number;
+    }) => Promise<WAMessage>;
     sendMessage: (jid: string, content: import("../Types/index.js").AnyMessageContent, options?: import("../Types/index.js").MiscMessageGenerationOptions) => Promise<WAMessage | undefined>;
     newsletterCreate: (name: string, description?: string) => Promise<import("../Types/index.js").NewsletterMetadata>;
     newsletterUpdate: (jid: string, updates: import("../Types/index.js").NewsletterUpdate) => Promise<unknown>;
     newsletterSubscribers: (jid: string) => Promise<{
         subscribers: number;
     }>;
+    newsletterSubscribed: () => Promise<unknown>;
+    newsletterFetchAllSubscribe: () => Promise<unknown>;
     newsletterMetadata: (type: "invite" | "jid", key: string) => Promise<import("../Types/index.js").NewsletterMetadata | null>;
+    newsletterFromUrl: (url: string) => Promise<import("../Types/index.js").NewsletterMetadata | null>;
     newsletterFollow: (jid: string) => Promise<unknown>;
     newsletterUnfollow: (jid: string) => Promise<unknown>;
     newsletterMute: (jid: string) => Promise<unknown>;
@@ -52,8 +58,17 @@ export declare const makeMessagesRecvSocket: (config: SocketConfig) => {
     newsletterUpdateDescription: (jid: string, description: string) => Promise<unknown>;
     newsletterUpdatePicture: (jid: string, content: import("../Types/index.js").WAMediaUpload) => Promise<unknown>;
     newsletterRemovePicture: (jid: string) => Promise<unknown>;
+    newsletterReactionMode: (jid: string, mode: string) => Promise<unknown>;
     newsletterReactMessage: (jid: string, serverId: string, reaction?: string) => Promise<void>;
-    newsletterFetchMessages: (jid: string, count: number, since: number, after: number) => Promise<any>;
+    newsletterFetchMessages: (typeOrJid: string, keyOrCount: string | number, count?: number | undefined, after?: number | undefined, before?: number | undefined) => Promise<any>;
+    newsletterFetchUpdates: (jid: string, count?: number, after?: number, since?: number) => Promise<{
+        server_id: string;
+        views: number;
+        reactions: {
+            count: number;
+            code: string;
+        }[];
+    }[]>;
     subscribeNewsletterUpdates: (jid: string) => Promise<{
         duration: string;
     } | null>;
@@ -200,4 +215,3 @@ export declare const makeMessagesRecvSocket: (config: SocketConfig) => {
     fetchAccountReachoutTimelock: () => Promise<import("../Types/index.js").ReachoutTimelockState>;
     fetchNewChatMessageCap: () => Promise<NewChatMessageCapInfo>;
 };
-//# sourceMappingURL=messages-recv.d.ts.map

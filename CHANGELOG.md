@@ -3,6 +3,19 @@
 Based on **@whiskeysockets/baileys 7.0.0-rc14**. Only the changes made
 on top of the official release are listed here.
 
+## 1.0.9
+- Fix: onWhatsApp LID lookups now return the `lid` field. The
+  internal PN-to-LID map key was malformed (`user@@s.whatsapp.net`)
+  since 1.0.4, so the lookup never matched and `lid` was silently
+  never attached. Found during the src/ source audit; proven with
+  a runtime check against the shipped code before fixing.
+- Type declarations healed to match the shipped JS surface
+  (newsletter and status-mention methods, `nctSalt`,
+  `thumbnail_info`) - these come from the verified TypeScript
+  source in the repository (src/), which compiles byte-identically
+  to the shipped library.
+- README: recommended bot pin updated to 1.0.9.
+
 ## 1.0.8
 - README: the licence section now describes the dual licence
   correctly, and dependency-transparency links were added.

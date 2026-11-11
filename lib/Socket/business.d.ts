@@ -51,13 +51,19 @@ export declare const makeBusinessSocket: (config: SocketConfig) => {
     })[]>;
     updateMemberLabel: (jid: string, memberLabel: string) => Promise<string>;
     updateMediaMessage: (message: import("../index.js").WAMessage) => Promise<import("../index.js").WAMessage>;
+    sendStatusMention: (jidList: string[], content: import("../index.js").AnyMessageContent, options?: import("../index.js").MiscMessageGenerationOptions & {
+        delayMs?: number;
+    }) => Promise<import("../index.js").WAMessage>;
     sendMessage: (jid: string, content: import("../index.js").AnyMessageContent, options?: import("../index.js").MiscMessageGenerationOptions) => Promise<import("../index.js").WAMessage | undefined>;
     newsletterCreate: (name: string, description?: string) => Promise<import("../index.js").NewsletterMetadata>;
     newsletterUpdate: (jid: string, updates: import("../index.js").NewsletterUpdate) => Promise<unknown>;
     newsletterSubscribers: (jid: string) => Promise<{
         subscribers: number;
     }>;
+    newsletterSubscribed: () => Promise<unknown>;
+    newsletterFetchAllSubscribe: () => Promise<unknown>;
     newsletterMetadata: (type: "invite" | "jid", key: string) => Promise<import("../index.js").NewsletterMetadata | null>;
+    newsletterFromUrl: (url: string) => Promise<import("../index.js").NewsletterMetadata | null>;
     newsletterFollow: (jid: string) => Promise<unknown>;
     newsletterUnfollow: (jid: string) => Promise<unknown>;
     newsletterMute: (jid: string) => Promise<unknown>;
@@ -66,8 +72,17 @@ export declare const makeBusinessSocket: (config: SocketConfig) => {
     newsletterUpdateDescription: (jid: string, description: string) => Promise<unknown>;
     newsletterUpdatePicture: (jid: string, content: WAMediaUpload) => Promise<unknown>;
     newsletterRemovePicture: (jid: string) => Promise<unknown>;
+    newsletterReactionMode: (jid: string, mode: string) => Promise<unknown>;
     newsletterReactMessage: (jid: string, serverId: string, reaction?: string) => Promise<void>;
-    newsletterFetchMessages: (jid: string, count: number, since: number, after: number) => Promise<any>;
+    newsletterFetchMessages: (typeOrJid: string, keyOrCount: string | number, count?: number | undefined, after?: number | undefined, before?: number | undefined) => Promise<any>;
+    newsletterFetchUpdates: (jid: string, count?: number, after?: number, since?: number) => Promise<{
+        server_id: string;
+        views: number;
+        reactions: {
+            count: number;
+            code: string;
+        }[];
+    }[]>;
     subscribeNewsletterUpdates: (jid: string) => Promise<{
         duration: string;
     } | null>;
@@ -214,4 +229,3 @@ export declare const makeBusinessSocket: (config: SocketConfig) => {
     fetchAccountReachoutTimelock: () => Promise<import("../index.js").ReachoutTimelockState>;
     fetchNewChatMessageCap: () => Promise<import("../index.js").NewChatMessageCapInfo>;
 };
-//# sourceMappingURL=business.d.ts.map
