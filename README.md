@@ -32,7 +32,7 @@ Full per-version list: [CHANGELOG.md](CHANGELOG.md) · Plans: [ROADMAP.md](ROADM
 Change only the dependency line — your code stays the same:
 
 ```json
-"@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.7"
+"@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.9"
 ```
 
 Designed for developers who need a familiar Baileys-compatible API with extra functionality and a smoother development experience.
@@ -41,8 +41,10 @@ Designed for developers who need a familiar Baileys-compatible API with extra fu
 
 The full TypeScript source of this package is in
 [`src/`](src/). It is **build-verified**: compiling it with the
-included tsconfig reproduces the shipped `lib/` byte-for-byte,
-so what you read here is exactly what runs.
+included tsconfig reproduces the shipped `lib/` JavaScript
+exactly — what you read here is what runs. (The published
+tarball omits the build's sourcemap files, and a few type
+declarations were completed so the types match the shipped JS.)
 
 ## 📦 Installation
 
