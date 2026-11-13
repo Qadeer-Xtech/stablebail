@@ -285,3 +285,4 @@ export declare const makeCommunitiesSocket: (config: SocketConfig) => {
     fetchNewChatMessageCap: () => Promise<import("../Types/index.js").NewChatMessageCapInfo>;
 };
 export declare const extractCommunityMetadata: (result: BinaryNode) => GroupMetadata;
+//# sourceMappingURL=communities.d.ts.map

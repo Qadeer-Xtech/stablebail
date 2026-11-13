@@ -1,3 +1,4 @@
+import { proto } from '../../WAProto/index.js';
 import type { SocketConfig, WAMediaUpload } from '../Types/index.js';
 import type { NewsletterMetadata, NewsletterUpdate } from '../Types/index.js';
 export declare const makeNewsletterSocket: (config: SocketConfig) => {
@@ -6,7 +7,10 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     newsletterSubscribers: (jid: string) => Promise<{
         subscribers: number;
     }>;
+    newsletterSubscribed: () => Promise<unknown>;
+    newsletterFetchAllSubscribe: () => Promise<unknown>;
     newsletterMetadata: (type: "invite" | "jid", key: string) => Promise<NewsletterMetadata | null>;
+    newsletterFromUrl: (url: string) => Promise<NewsletterMetadata | null>;
     newsletterFollow: (jid: string) => Promise<unknown>;
     newsletterUnfollow: (jid: string) => Promise<unknown>;
     newsletterMute: (jid: string) => Promise<unknown>;
@@ -15,8 +19,9 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     newsletterUpdateDescription: (jid: string, description: string) => Promise<unknown>;
     newsletterUpdatePicture: (jid: string, content: WAMediaUpload) => Promise<unknown>;
     newsletterRemovePicture: (jid: string) => Promise<unknown>;
+    newsletterReactionMode: (jid: string, mode: string) => Promise<unknown>;
     newsletterReactMessage: (jid: string, serverId: string, reaction?: string) => Promise<void>;
-    newsletterFetchMessages: (typeOrJid: string, keyOrCount: string | number, count?: number, after?: number, before?: number) => Promise<any>;
+    newsletterFetchMessages: (typeOrJid: string, keyOrCount: string | number, count?: number | undefined, after?: number | undefined, before?: number | undefined) => Promise<any>;
     newsletterFetchUpdates: (jid: string, count?: number, after?: number, since?: number) => Promise<{
         server_id: string;
         views: number;
@@ -25,10 +30,6 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
             code: string;
         }[];
     }[]>;
-    newsletterSubscribed: () => Promise<unknown>;
-    newsletterFetchAllSubscribe: () => Promise<unknown>;
-    newsletterFromUrl: (url: string) => Promise<NewsletterMetadata | null>;
-    newsletterReactionMode: (jid: string, mode: string) => Promise<unknown>;
     subscribeNewsletterUpdates: (jid: string) => Promise<{
         duration: string;
     } | null>;
@@ -36,8 +37,8 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     newsletterChangeOwner: (jid: string, newOwnerJid: string) => Promise<void>;
     newsletterDemote: (jid: string, userJid: string) => Promise<void>;
     newsletterDelete: (jid: string) => Promise<void>;
-    groupMetadata: (jid: string) => Promise<import("../index.js").GroupMetadata>;
-    groupCreate: (subject: string, participants: string[]) => Promise<import("../index.js").GroupMetadata>;
+    groupMetadata: (jid: string) => Promise<import("../Types/index.js").GroupMetadata>;
+    groupCreate: (subject: string, participants: string[]) => Promise<import("../Types/index.js").GroupMetadata>;
     groupLeave: (id: string) => Promise<void>;
     groupUpdateSubject: (jid: string, subject: string) => Promise<void>;
     groupRequestParticipantsList: (jid: string) => Promise<{
@@ -47,24 +48,24 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
         status: string;
         jid: string | undefined;
     }[]>;
-    groupParticipantsUpdate: (jid: string, participants: string[], action: import("../index.js").ParticipantAction) => Promise<{
+    groupParticipantsUpdate: (jid: string, participants: string[], action: import("../Types/index.js").ParticipantAction) => Promise<{
         status: string;
         jid: string | undefined;
-        content: import("../index.js").BinaryNode;
+        content: import("../WABinary/index.js").BinaryNode;
     }[]>;
     groupUpdateDescription: (jid: string, description?: string) => Promise<void>;
     groupInviteCode: (jid: string) => Promise<string | undefined>;
     groupRevokeInvite: (jid: string) => Promise<string | undefined>;
     groupAcceptInvite: (code: string) => Promise<string | undefined>;
     groupRevokeInviteV4: (groupJid: string, invitedJid: string) => Promise<boolean>;
-    groupAcceptInviteV4: (key: string | import("../index.js").WAMessageKey, inviteMessage: import("../index.js").proto.Message.IGroupInviteMessage) => Promise<any>;
-    groupGetInviteInfo: (code: string) => Promise<import("../index.js").GroupMetadata>;
+    groupAcceptInviteV4: (key: string | import("../Types/index.js").WAMessageKey, inviteMessage: proto.Message.IGroupInviteMessage) => Promise<any>;
+    groupGetInviteInfo: (code: string) => Promise<import("../Types/index.js").GroupMetadata>;
     groupToggleEphemeral: (jid: string, ephemeralExpiration: number) => Promise<void>;
     groupSettingUpdate: (jid: string, setting: "announcement" | "not_announcement" | "locked" | "unlocked") => Promise<void>;
     groupMemberAddMode: (jid: string, mode: "admin_add" | "all_member_add") => Promise<void>;
     groupJoinApprovalMode: (jid: string, mode: "on" | "off") => Promise<void>;
     groupFetchAllParticipating: () => Promise<{
-        [_: string]: import("../index.js").GroupMetadata;
+        [_: string]: import("../Types/index.js").GroupMetadata;
     }>;
     serverProps: {
         privacyTokenOn1to1: boolean;
@@ -74,7 +75,7 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     createCallLink: (type: "audio" | "video", event?: {
         startTime: number;
     }, timeoutMs?: number) => Promise<string | undefined>;
-    getBotListV2: () => Promise<import("../index.js").BotListInfo[]>;
+    getBotListV2: () => Promise<import("../Types/index.js").BotListInfo[]>;
     messageMutex: {
         mutex<T>(code: () => Promise<T> | T): Promise<T>;
     };
@@ -90,9 +91,9 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     fetchPrivacySettings: (force?: boolean) => Promise<{
         [_: string]: string;
     }>;
-    upsertMessage: (msg: import("../index.js").WAMessage, type: import("../index.js").MessageUpsertType) => Promise<void>;
-    appPatch: (patchCreate: import("../index.js").WAPatchCreate) => Promise<void>;
-    sendPresenceUpdate: (type: import("../index.js").WAPresence, toJid?: string) => Promise<void>;
+    upsertMessage: (msg: import("../Types/index.js").WAMessage, type: import("../Types/index.js").MessageUpsertType) => Promise<void>;
+    appPatch: (patchCreate: import("../Types/index.js").WAPatchCreate) => Promise<void>;
+    sendPresenceUpdate: (type: import("../Types/index.js").WAPresence, toJid?: string) => Promise<void>;
     presenceSubscribe: (toJid: string) => Promise<void>;
     profilePictureUrl: (jid: string, type?: "preview" | "image", timeoutMs?: number) => Promise<string | undefined>;
     fetchBlocklist: () => Promise<(string | undefined)[]>;
@@ -107,22 +108,22 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     updateProfileName: (name: string) => Promise<void>;
     updateBlockStatus: (jid: string, action: "block" | "unblock") => Promise<void>;
     updateDisableLinkPreviewsPrivacy: (isPreviewsDisabled: boolean) => Promise<void>;
-    updateCallPrivacy: (value: import("../index.js").WAPrivacyCallValue) => Promise<void>;
-    updateMessagesPrivacy: (value: import("../index.js").WAPrivacyMessagesValue) => Promise<void>;
-    updateLastSeenPrivacy: (value: import("../index.js").WAPrivacyValue) => Promise<void>;
-    updateOnlinePrivacy: (value: import("../index.js").WAPrivacyOnlineValue) => Promise<void>;
-    updateProfilePicturePrivacy: (value: import("../index.js").WAPrivacyValue) => Promise<void>;
-    updateStatusPrivacy: (value: import("../index.js").WAPrivacyValue) => Promise<void>;
-    updateReadReceiptsPrivacy: (value: import("../index.js").WAReadReceiptsValue) => Promise<void>;
-    updateGroupsAddPrivacy: (value: import("../index.js").WAPrivacyGroupAddValue) => Promise<void>;
+    updateCallPrivacy: (value: import("../Types/index.js").WAPrivacyCallValue) => Promise<void>;
+    updateMessagesPrivacy: (value: import("../Types/index.js").WAPrivacyMessagesValue) => Promise<void>;
+    updateLastSeenPrivacy: (value: import("../Types/index.js").WAPrivacyValue) => Promise<void>;
+    updateOnlinePrivacy: (value: import("../Types/index.js").WAPrivacyOnlineValue) => Promise<void>;
+    updateProfilePicturePrivacy: (value: import("../Types/index.js").WAPrivacyValue) => Promise<void>;
+    updateStatusPrivacy: (value: import("../Types/index.js").WAPrivacyValue) => Promise<void>;
+    updateReadReceiptsPrivacy: (value: import("../Types/index.js").WAReadReceiptsValue) => Promise<void>;
+    updateGroupsAddPrivacy: (value: import("../Types/index.js").WAPrivacyGroupAddValue) => Promise<void>;
     updateDefaultDisappearingMode: (duration: number) => Promise<void>;
-    getBusinessProfile: (jid: string) => Promise<import("../index.js").WABusinessProfile | void>;
+    getBusinessProfile: (jid: string) => Promise<import("../Types/index.js").WABusinessProfile | void>;
     resyncAppState: (collections: readonly ("critical_unblock_low" | "regular_high" | "regular_low" | "critical_block" | "regular")[], isInitialSync: boolean) => Promise<void>;
-    chatModify: (mod: import("../index.js").ChatModification, jid: string) => Promise<void>;
+    chatModify: (mod: import("../Types/index.js").ChatModification, jid: string) => Promise<void>;
     cleanDirtyBits: (type: "account_sync" | "groups", fromTimestamp?: number | string) => Promise<void>;
-    addOrEditContact: (jid: string, contact: import("../index.js").proto.SyncActionValue.IContactAction) => Promise<void>;
+    addOrEditContact: (jid: string, contact: proto.SyncActionValue.IContactAction) => Promise<void>;
     removeContact: (jid: string) => Promise<void>;
-    placeholderResendCache: import("../index.js").CacheStore;
+    placeholderResendCache: import("../Types/index.js").CacheStore;
     addLabel: (jid: string, labels: import("../Types/Label.js").LabelActionBody) => Promise<void>;
     addChatLabel: (jid: string, labelId: string) => Promise<void>;
     removeChatLabel: (jid: string, labelId: string) => Promise<void>;
@@ -135,9 +136,9 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     addOrEditQuickReply: (quickReply: import("../Types/Bussines.js").QuickReplyAction) => Promise<void>;
     removeQuickReply: (timestamp: string) => Promise<void>;
     type: "md";
-    ws: import("./Client/index.js").WebSocketClient;
-    ev: import("../index.js").BaileysEventEmitter & {
-        process(handler: (events: Partial<import("../index.js").BaileysEventMap>) => void | Promise<void>): () => void;
+    ws: import("./Client/websocket.js").WebSocketClient;
+    ev: import("../Types/index.js").BaileysEventEmitter & {
+        process(handler: (events: Partial<import("../Types/index.js").BaileysEventMap>) => void | Promise<void>): () => void;
         buffer(): void;
         createBufferedFunction<A extends any[], T>(work: (...args: A) => Promise<T>): (...args: A) => Promise<T>;
         flush(): boolean;
@@ -145,17 +146,17 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
         destroy(): void;
     };
     authState: {
-        creds: import("../index.js").AuthenticationCreds;
-        keys: import("../index.js").SignalKeyStoreWithTransaction;
+        creds: import("../Types/index.js").AuthenticationCreds;
+        keys: import("../Types/index.js").SignalKeyStoreWithTransaction;
     };
-    signalRepository: import("../index.js").SignalRepositoryWithLIDStore;
-    user: import("../index.js").Contact | undefined;
+    signalRepository: import("../Types/index.js").SignalRepositoryWithLIDStore;
+    user: import("../Types/index.js").Contact | undefined;
     generateMessageTag: () => string;
-    query: (node: import("../index.js").BinaryNode, timeoutMs?: number) => Promise<any>;
+    query: (node: import("../WABinary/index.js").BinaryNode, timeoutMs?: number) => Promise<any>;
     waitForMessage: <T>(msgId: string, timeoutMs?: number | undefined) => Promise<T | undefined>;
     waitForSocketOpen: () => Promise<void>;
     sendRawMessage: (data: Uint8Array | Buffer) => Promise<void>;
-    sendNode: (frame: import("../index.js").BinaryNode) => Promise<void>;
+    sendNode: (frame: import("../WABinary/index.js").BinaryNode) => Promise<void>;
     logout: (msg?: string) => Promise<void>;
     end: (error: Error | undefined) => Promise<void>;
     registerSocketEndHandler: (handler: (error: Error | undefined) => void | Promise<void>) => void;
@@ -165,17 +166,18 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
     digestKeyBundle: () => Promise<void>;
     rotateSignedPreKey: () => Promise<void>;
     requestPairingCode: (phoneNumber: string, customPairingCode?: string) => Promise<string>;
-    updateServerTimeOffset: ({ attrs }: import("../index.js").BinaryNode) => void;
+    updateServerTimeOffset: ({ attrs }: import("../WABinary/index.js").BinaryNode) => void;
     sendUnifiedSession: () => Promise<void>;
     wamBuffer: import("../index.js").BinaryInfo;
-    waitForConnectionUpdate: (check: (u: Partial<import("../index.js").ConnectionState>) => Promise<boolean | undefined>, timeoutMs?: number) => Promise<void>;
+    waitForConnectionUpdate: (check: (u: Partial<import("../Types/index.js").ConnectionState>) => Promise<boolean | undefined>, timeoutMs?: number) => Promise<void>;
     sendWAMBuffer: (wamBuffer: Buffer) => Promise<any>;
     executeUSyncQuery: (usyncQuery: import("../index.js").USyncQuery) => Promise<import("../index.js").USyncQueryResult | undefined>;
     onWhatsApp: (...phoneNumber: string[]) => Promise<{
         jid: string;
         exists: boolean;
     }[] | undefined>;
-    fetchAccountReachoutTimelock: () => Promise<import("../index.js").ReachoutTimelockState>;
-    fetchNewChatMessageCap: () => Promise<import("../index.js").NewChatMessageCapInfo>;
+    fetchAccountReachoutTimelock: () => Promise<import("../Types/index.js").ReachoutTimelockState>;
+    fetchNewChatMessageCap: () => Promise<import("../Types/index.js").NewChatMessageCapInfo>;
 };
 export type NewsletterSocket = ReturnType<typeof makeNewsletterSocket>;
+//# sourceMappingURL=newsletter.d.ts.map

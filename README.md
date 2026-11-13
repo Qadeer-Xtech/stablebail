@@ -73,7 +73,7 @@ For a smooth, error-free install, use these exact settings in your bot's "packag
 ```json
 {
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.10",
+    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.11",
     "sharp": "0.35.5",
     "wa-sticker-formatter": "4.4.4"
   },
@@ -368,11 +368,11 @@ StableBail is designed to minimize migration work for existing Baileys users. Ho
 
 ## 📄 License
 
-Dual licence — see the [LICENSE](LICENSE) file: **Part 1** is the
-upstream MIT License (Baileys / WhiskeySockets); **Part 2** adds the
-Team Qadeer terms for the fixes, extensions and branding in
-StableBail. The [NOTICE](NOTICE) file ships with the package and
-must be retained.
+MIT License — see the [LICENSE](LICENSE) file. The whole package
+is under MIT: the upstream Baileys code (© Rajeh Taher /
+WhiskeySockets) and Team Qadeer's fixes, extensions and branding
+(© Team Qadeer / Qadeer-Xtech) alike. The [NOTICE](NOTICE) file
+ships with the package and carries a (non-binding) credit request.
 
 ## Dependencies
 

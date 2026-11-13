@@ -75,3 +75,4 @@ export declare const TimeMs: {
     Day: number;
     Week: number;
 };
+//# sourceMappingURL=index.d.ts.map

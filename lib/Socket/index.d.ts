@@ -272,3 +272,4 @@ declare const makeWASocket: (config: UserFacingSocketConfig) => {
     fetchNewChatMessageCap: () => Promise<import("../index.js").NewChatMessageCapInfo>;
 };
 export default makeWASocket;
+//# sourceMappingURL=index.d.ts.map

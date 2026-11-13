@@ -1,22 +1,7 @@
-================================================================================
-@qadeer-xtech/stablebail — LICENCE
-================================================================================
-
-This package contains two parts under two licences:
-
-  PART 1 — the upstream Baileys code, under the MIT License (below).
-  PART 2 — the additions and modifications made by Team Qadeer,
-           under the Team Qadeer terms (after Part 1).
-
-Using this package means accepting both parts for their respective code.
-
-================================================================================
-PART 1 — UPSTREAM BAILEYS CODE — MIT LICENSE
-================================================================================
-
 MIT License
 
 Copyright (c) 2025 Rajeh Taher/WhiskeySockets
+Copyright (c) 2026 Team Qadeer (Qadeer-Xtech)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,34 +20,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-================================================================================
-PART 2 — TEAM QADEER ADDITIONS — © TEAM QADEER, ALL RIGHTS RESERVED
-================================================================================
-
-Copyright (c) 2026 Team Qadeer (Qadeer-Xtech). All rights reserved.
-
-This part covers everything in this package that was written or changed by
-Team Qadeer — including the bug fixes not yet released upstream, the extended
-newsletter/channel method set, sendStatusMention, the cstoken/timelock
-completion, and the QADEER banner.
-
-Terms:
-
-1. You MAY install and use this package, as published by Team Qadeer, in
-   your own projects (including bots that you run for yourself or others).
-
-2. You may NOT republish this package — or the Team Qadeer portions of it —
-   under a different package name, your own name, or with the Team Qadeer
-   attribution, banner, LICENSE or NOTICE removed or altered, unless you
-   have prior written permission from Team Qadeer.
-
-3. Any copy or redistribution that is permitted must keep this LICENSE file
-   and the NOTICE file intact and unchanged.
-
-4. The Team Qadeer portions are provided "AS IS", without warranty of any
-   kind. Team Qadeer is not liable for any claim or damages arising from
-   their use.
-
-If you want to redistribute or rebrand, ask first — permission is the whole
-point of this licence.

@@ -215,3 +215,4 @@ export declare const makeMessagesRecvSocket: (config: SocketConfig) => {
     fetchAccountReachoutTimelock: () => Promise<import("../Types/index.js").ReachoutTimelockState>;
     fetchNewChatMessageCap: () => Promise<NewChatMessageCapInfo>;
 };
+//# sourceMappingURL=messages-recv.d.ts.map

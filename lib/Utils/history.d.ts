@@ -23,3 +23,4 @@ export declare const downloadAndProcessHistorySyncNotification: (msg: proto.Mess
     progress: number | null | undefined;
 }>;
 export declare const getHistoryMsg: (message: proto.IMessage) => proto.Message.IHistorySyncNotification;
+//# sourceMappingURL=history.d.ts.map

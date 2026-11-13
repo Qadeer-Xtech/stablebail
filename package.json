@@ -1,13 +1,13 @@
 {
   "name": "@qadeer-xtech/stablebail",
   "type": "module",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A WebSockets library for interacting with WhatsApp Web",
   "keywords": [
     "whatsapp",
     "automation"
   ],
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "author": "Qadeer-Xtech",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -41,13 +41,13 @@
     "@cacheable/node-cache": "1.7.6",
     "@hapi/boom": "9.1.4",
     "async-mutex": "0.5.0",
-    "libsignal": "npm:@qadeer-xtech/libsignal@1.0.0",
+    "libsignal": "npm:@qadeer-xtech/libsignal@1.0.1",
     "lru-cache": "11.5.3",
     "music-metadata": "11.16.1",
     "p-queue": "9.3.5",
     "pino": "9.14.0",
     "protobufjs": "7.6.6",
-    "whatsapp-rust-bridge": "npm:@qadeer-xtech/whatsapp-rust-bridge@1.0.0",
+    "whatsapp-rust-bridge": "npm:@qadeer-xtech/whatsapp-rust-bridge@1.0.1",
     "ws": "8.22.2"
   },
   "devDependencies": {

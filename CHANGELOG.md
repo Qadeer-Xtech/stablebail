@@ -3,6 +3,23 @@
 Based on **@whiskeysockets/baileys 7.0.0-rc14**. Only the changes made
 on top of the official release are listed here.
 
+## 1.0.11
+- Licence: the whole package is now under the single **MIT License**.
+  The previous dual licence (upstream MIT + Team Qadeer terms) is
+  replaced; the LICENSE file carries both copyright lines (WhiskeySockets
+  and Team Qadeer), `package.json` now declares `"license": "MIT"`, and
+  the NOTICE file is a credit request rather than a licence condition.
+- Build: the shipped library is a full build from the TypeScript
+  source in `src/`, and the package now includes the source maps
+  (`.js.map`) for the compiled files. The compiled JavaScript is
+  unchanged from 1.0.10; the type declarations are refreshed from
+  source (the newsletter declarations are now complete, matching
+  the shipped methods).
+- Dependencies: `@qadeer-xtech/libsignal` and
+  `@qadeer-xtech/whatsapp-rust-bridge` updated to 1.0.1 (repository
+  metadata only; their code remains byte-identical to upstream).
+- No library code changes in this release.
+
 ## 1.0.10
 - Test infrastructure: the repository now ships the jest
   configuration for the included unit test suite - `npm test`
