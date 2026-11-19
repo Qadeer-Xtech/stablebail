@@ -445,16 +445,31 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			const lidResults = result.list.filter(a => !!a.lid)
 			if (lidResults.length > 0) {
 				logger.trace('Storing LID maps from device call')
-				await signalRepository.lidMapping.storeLIDPNMappings(lidResults.map(a => ({ lid: a.lid as string, pn: a.id })))
+				const storedMappings = await signalRepository.lidMapping.storeLIDPNMappings(
+					lidResults.map(a => ({ lid: a.lid as string, pn: a.id }))
+				)
+				const newlyMappedUsers = new Set(storedMappings.map(pair => pair.lidUser))
+				const isNewlyMapped = (lid: string) => newlyMappedUsers.has(jidDecode(lid)?.user ?? '')
+				const lids = lidResults.map(a => a.lid as string)
+				const newLids = lids.filter(isNewlyMapped)
+				const knownLids = lids.filter(lid => !isNewlyMapped(lid))
 
-				// Force-refresh sessions for newly mapped LIDs to align identity addressing
-				try {
-					const lids = lidResults.map(a => a.lid as string)
-					if (lids.length) {
-						await assertSessions(lids, true)
+				// Force-refresh only when a PN↔LID identity mapping is new or changed.
+				if (newLids.length) {
+					try {
+						await assertSessions(newLids, true)
+					} catch (err) {
+						logger.warn({ err, count: newLids.length }, 'failed to assert sessions for newly mapped LIDs')
 					}
-				} catch (e) {
-					logger.warn({ e, count: lidResults.length }, 'failed to assert sessions for newly mapped LIDs')
+				}
+
+				// Known LIDs need normal validation, not a forced session replacement on every send.
+				if (knownLids.length) {
+					try {
+						await assertSessions(knownLids)
+					} catch (err) {
+						logger.warn({ err, count: knownLids.length }, 'failed to assert sessions for known LIDs')
+					}
 				}
 			}
 

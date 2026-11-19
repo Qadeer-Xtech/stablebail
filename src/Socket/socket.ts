@@ -428,6 +428,18 @@ export const makeSocket = (config: SocketConfig) => {
 	let qrTimer: NodeJS.Timeout
 	let closed = false
 
+	// The raw WebSocket "open" event fires before the WhatsApp Noise handshake
+	// has completed. Pairing-code IQs must not be encrypted/sent until finishInit().
+	let resolveConnectionReady: (() => void) | undefined
+	let rejectConnectionReady: ((error: Error) => void) | undefined
+	const connectionReady = new Promise<void>((resolve, reject) => {
+		resolveConnectionReady = resolve
+		rejectConnectionReady = reject
+	})
+	// A socket may close before anyone requests a pairing code; avoid an
+	// unhandled rejection while preserving the rejection for later awaiters.
+	connectionReady.catch(() => {})
+
 	const socketEndHandlers: Array<(error: Error | undefined) => void | Promise<void>> = []
 
 	/** log & process any unexpected errors */
@@ -502,6 +514,9 @@ export const makeSocket = (config: SocketConfig) => {
 			}).finish()
 		)
 		await noise.finishInit()
+		resolveConnectionReady?.()
+		resolveConnectionReady = undefined
+		rejectConnectionReady = undefined
 		startKeepAliveRequest()
 	}
 
@@ -667,6 +682,12 @@ export const makeSocket = (config: SocketConfig) => {
 		}
 
 		closed = true
+		if (rejectConnectionReady) {
+			rejectConnectionReady(
+				error || new Boom('Connection closed before the WhatsApp handshake completed', { statusCode: DisconnectReason.connectionClosed })
+			)
+			rejectConnectionReady = undefined
+		}
 		logger.info({ trace: error?.stack }, error ? 'connection errored' : 'connection closed')
 
 		clearInterval(keepAliveReq)
@@ -798,6 +819,9 @@ export const makeSocket = (config: SocketConfig) => {
 	}
 
 	const requestPairingCode = async (phoneNumber: string, customPairingCode?: string): Promise<string> => {
+		// Waiting for ws.open alone is insufficient: the Noise handshake may still
+		// be in progress, causing WhatsApp to ignore the companion registration IQ.
+		await connectionReady
 		const pairingCode = customPairingCode ?? bytesToCrockford(randomBytes(5))
 
 		if (customPairingCode && customPairingCode?.length !== 8) {
@@ -847,7 +871,13 @@ export const makeSocket = (config: SocketConfig) => {
 						{
 							tag: 'companion_platform_display',
 							attrs: {},
-							content: `${browser[1]} (${browser[0]})`
+							// Android is browser-first (['Chrome', 'Android', '15']) while
+							// desktop browsers are OS-first; the display is "Browser (OS)",
+							// so it must read browser[0]/browser[1] for Android and the
+							// reverse otherwise, or the server rejects the pairing code.
+							content: browser[1].toLocaleLowerCase().includes('android')
+								? `${browser[0]} (${browser[1]})`
+								: `${browser[1]} (${browser[0]})`
 						},
 						{
 							tag: 'link_code_pairing_nonce',
@@ -1225,6 +1255,10 @@ export const makeSocket = (config: SocketConfig) => {
 		sendWAMBuffer,
 		executeUSyncQuery,
 		onWhatsApp,
+		/** Resolve a phone-number JID to its linked-device LID using the persisted mapping/USync fallback. */
+		getLIDForPN: (pn: string) => signalRepository.lidMapping.getLIDForPN(pn),
+		/** Resolve a linked-device LID to its phone-number JID using the persisted mapping/USync fallback. */
+		getPNForLID: (lid: string) => signalRepository.lidMapping.getPNForLID(lid),
 		fetchAccountReachoutTimelock,
 		fetchNewChatMessageCap
 	}

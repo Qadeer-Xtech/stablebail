@@ -4,7 +4,7 @@ import type { AuthenticationState, SocketConfig, WAVersion } from '../Types'
 import { Browsers } from '../Utils/browser-utils'
 import logger from '../Utils/logger'
 
-const version = [2, 3000, 1048663002] // stablebail 1.0.4: pin taza — purana pin pairing khamoshi se fail karta hai (405 client_too_old)
+const version = [2, 3000, 1054670094] // pin taza — purana pin pairing khamoshi se fail karta hai (405 client_too_old)
 
 export const UNAUTHORIZED_CODES = [401, 403, 419]
 
@@ -52,35 +52,39 @@ export const PROCESSABLE_HISTORY_TYPES = [
 ]
 
 export const DEFAULT_CACHE_TTLS = {
-	SIGNAL_STORE: 5 * 60, // 5 minutes
-	MSG_RETRY: 60 * 60, // 1 hour
-	CALL_OFFER: 5 * 60, // 5 minutes
-	USER_DEVICES: 5 * 60 // 5 minutes
+	SIGNAL_STORE: 15 * 60, // was 5 min → 15 min: fewer re-fetches on busy bots
+	MSG_RETRY: 60 * 60, // 1 hour (unchanged)
+	CALL_OFFER: 5 * 60, // 5 minutes (unchanged)
+	USER_DEVICES: 15 * 60 // was 5 min → 15 min: device list cached longer = faster sends
 }
 
 export const DEFAULT_CONNECTION_CONFIG: SocketConfig = {
 	version: version as WAVersion,
-	browser: Browsers.macOS('Chrome'),
+	browser: Browsers.androidPhone('Chrome'),
 	waWebSocketUrl: 'wss://web.whatsapp.com/ws/chat',
-	connectTimeoutMs: 20_000,
-	keepAliveIntervalMs: 30_000,
+	// TUNING: faster connect detection, shorter keepalive for bot responsiveness
+	connectTimeoutMs: 15_000, // was 20_000 — detect stalls faster
+	keepAliveIntervalMs: 20_000, // was 30_000 — ping more often, catch dead sockets sooner
 	logger: logger.child({ class: 'baileys' }),
 	emitOwnEvents: true,
-	defaultQueryTimeoutMs: 60_000,
+	defaultQueryTimeoutMs: 30_000, // was 60_000 — WMex queries (newsletter, group) rarely need >30s
 	customUploadHosts: [],
-	retryRequestDelayMs: 250,
+	retryRequestDelayMs: 150, // was 250 — faster message retry
 	maxMsgRetryCount: 5,
 	fireInitQueries: true,
 	auth: undefined as unknown as AuthenticationState,
 	markOnlineOnConnect: true,
-	syncFullHistory: true,
+	syncFullHistory: false, // was true — bots don't need full history; saves RAM + startup time
 	patchMessageBeforeSending: msg => msg,
 	shouldSyncHistoryMessage: ({ syncType }: proto.Message.IHistorySyncNotification) => {
-		return syncType !== proto.HistorySync.HistorySyncType.FULL
+		// Only sync recent + push_name; skip FULL and INITIAL_BOOTSTRAP for speed
+		return (
+			syncType === proto.HistorySync.HistorySyncType.RECENT || syncType === proto.HistorySync.HistorySyncType.PUSH_NAME
+		)
 	},
 	shouldIgnoreJid: () => false,
 	linkPreviewImageThumbnailWidth: 192,
-	transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 3000 },
+	transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 2000 }, // was 3000
 	generateHighQualityLinkPreview: false,
 	enableAutoSessionRecreation: true,
 	enableRecentMessageCache: true,

@@ -22,12 +22,19 @@ const BROWSER_TO_COMPANION_WEB_CLIENT: Record<string, CompanionWebClientType> = 
 	Safari: CompanionWebClientType.SAFARI
 }
 
-export const getCompanionWebClientType = ([os, browserName]: WABrowserDescription): CompanionWebClientType => {
-	if (browserName === 'Desktop') {
+export const getCompanionWebClientType = (browser: WABrowserDescription): CompanionWebClientType => {
+	const [os, browserName] = browser
+	// Android uses browser-first order (['Chrome', 'Android', '15']) while
+	// desktop browsers use OS-first (['Windows', 'Chrome', ...]); the
+	// browser name is browser[0] for Android, browser[1] otherwise.
+	// Reporting OTHER_WEB_CLIENT (9) for Android makes WhatsApp reject
+	// pairing codes, so resolve the real browser name here.
+	const name = browserName.toLocaleLowerCase().includes('android') ? os : browserName
+	if (name === 'Desktop') {
 		return os === 'Windows' ? CompanionWebClientType.UWP : CompanionWebClientType.ELECTRON
 	}
 
-	return BROWSER_TO_COMPANION_WEB_CLIENT[browserName] || CompanionWebClientType.OTHER_WEB_CLIENT
+	return BROWSER_TO_COMPANION_WEB_CLIENT[name] || CompanionWebClientType.OTHER_WEB_CLIENT
 }
 
 export const getCompanionPlatformId = (browser: WABrowserDescription): string => {

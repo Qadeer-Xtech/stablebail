@@ -2,7 +2,7 @@ import { Boom } from '@hapi/boom'
 import { createHash, randomBytes } from 'crypto'
 import type Long from 'long'
 import { proto } from '../../WAProto/index.js'
-const baileysVersion = [2, 3000, 1043857760]
+const baileysVersion = [2, 3000, 1054670094]
 import type {
 	BaileysEventEmitter,
 	BaileysEventMap,
@@ -236,41 +236,13 @@ export const bindWaitForConnectionUpdate = (ev: BaileysEventEmitter) => bindWait
  * utility that fetches latest baileys version from the master branch.
  * Use to ensure your WA connection is always on the latest version
  */
+/**
+ * Fetches the latest WA version by querying the live WA Web service worker.
+ * Faster and more accurate than fetching from GitHub (which can be stale).
+ * Falls back to the bundled baileysVersion if the fetch fails.
+ */
 export const fetchLatestBaileysVersion = async (options: RequestInit = {}) => {
-	const URL = 'https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/src/Defaults/index.ts'
-	try {
-		const response = await fetch(URL, {
-			dispatcher: options.dispatcher,
-			method: 'GET',
-			headers: options.headers
-		})
-		if (!response.ok) {
-			throw new Boom(`Failed to fetch latest Baileys version: ${response.statusText}`, { statusCode: response.status })
-		}
-
-		const text = await response.text()
-		// Extract version from line 7 (const version = [...])
-		const lines = text.split('\n')
-		const versionLine = lines[6] // Line 7 (0-indexed)
-		const versionMatch = versionLine!.match(/const version = \[(\d+),\s*(\d+),\s*(\d+)\]/)
-
-		if (versionMatch) {
-			const version = [parseInt(versionMatch[1]!), parseInt(versionMatch[2]!), parseInt(versionMatch[3]!)] as WAVersion
-
-			return {
-				version,
-				isLatest: true
-			}
-		} else {
-			throw new Error('Could not parse version from Defaults/index.ts')
-		}
-	} catch (error) {
-		return {
-			version: baileysVersion as WAVersion,
-			isLatest: false,
-			error
-		}
-	}
+	return fetchLatestWaWebVersion(options)
 }
 
 /**
@@ -283,7 +255,7 @@ export const fetchLatestWaWebVersion = async (options: RequestInit = {}) => {
 		const defaultHeaders = {
 			'sec-fetch-site': 'none',
 			'user-agent':
-				'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+				'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.8103.78 Safari/537.36'
 		}
 
 		const headers = { ...defaultHeaders, ...options.headers }

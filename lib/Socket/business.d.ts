@@ -226,6 +226,8 @@ export declare const makeBusinessSocket: (config: SocketConfig) => {
         jid: string;
         exists: boolean;
     }[] | undefined>;
+    getLIDForPN: (pn: string) => Promise<string | null>;
+    getPNForLID: (lid: string) => Promise<string | null>;
     fetchAccountReachoutTimelock: () => Promise<import("../index.js").ReachoutTimelockState>;
     fetchNewChatMessageCap: () => Promise<import("../index.js").NewChatMessageCapInfo>;
 };

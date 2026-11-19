@@ -25,6 +25,7 @@ export function makeOfflineNodeProcessor(
 	batchSize = 10
 ) {
 	const nodes: OfflineNode[] = []
+	let head = 0
 	let isProcessing = false
 
 	const enqueue = (type: MessageType, node: BinaryNode) => {
@@ -39,8 +40,8 @@ export function makeOfflineNodeProcessor(
 		const promise = async () => {
 			let processedInBatch = 0
 
-			while (nodes.length && deps.isWsOpen()) {
-				const { type, node } = nodes.shift()!
+			while (head < nodes.length && deps.isWsOpen()) {
+				const { type, node } = nodes[head++]!
 
 				const nodeProcessor = nodeProcessorMap.get(type)
 
@@ -60,10 +61,22 @@ export function makeOfflineNodeProcessor(
 				}
 			}
 
+			// Release consumed entries in O(1); compact only after a substantial prefix is processed.
+			if (head >= nodes.length) {
+				nodes.length = 0
+				head = 0
+			} else if (head >= 1024 && head * 2 >= nodes.length) {
+				nodes.splice(0, head)
+				head = 0
+			}
+
 			isProcessing = false
 		}
 
-		promise().catch(error => deps.onUnexpectedError(error, 'processing offline nodes'))
+		promise().catch(error => {
+			isProcessing = false
+			deps.onUnexpectedError(error, 'processing offline nodes')
+		})
 	}
 
 	return { enqueue }

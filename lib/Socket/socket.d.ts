@@ -53,6 +53,10 @@ export declare const makeSocket: (config: SocketConfig) => {
         jid: string;
         exists: boolean;
     }[] | undefined>;
+    /** Resolve a phone-number JID to its linked-device LID using the persisted mapping/USync fallback. */
+    getLIDForPN: (pn: string) => Promise<string | null>;
+    /** Resolve a linked-device LID to its phone-number JID using the persisted mapping/USync fallback. */
+    getPNForLID: (lid: string) => Promise<string | null>;
     fetchAccountReachoutTimelock: () => Promise<ReachoutTimelockState>;
     fetchNewChatMessageCap: () => Promise<NewChatMessageCapInfo>;
 };

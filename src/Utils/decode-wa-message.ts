@@ -283,8 +283,13 @@ export const decryptMessageNode = (
 						fullMessage.verifiedBizName = details.verifiedName
 					}
 
-					if (tag === 'unavailable' && attrs.type === 'view_once') {
+					if (tag === 'unavailable' && (attrs.type === 'view_once' || attrs.type === 'view_once_unavailable_fanout')) {
+						// Mark view-once stubs (incl. the fanout variant the server
+						// sends to companions) so the bot can RECOGNISE them:
+						// without this flag the stub is dropped silently and the
+						// bot never knows a view-once was sent.
 						fullMessage.key.isViewOnce = true // TODO: remove from here and add a STUB TYPE
+						logger.debug({ msgId: fullMessage.key?.id, type: attrs.type }, 'view-once stub recognised')
 					}
 
 					if (attrs.count && tag === 'enc') {
@@ -339,7 +344,18 @@ export const decryptMessageNode = (
 						let msg: proto.IMessage = proto.Message.decode(
 							e2eType !== 'plaintext' ? unpadRandomMax16(msgBuffer) : msgBuffer
 						)
-						msg = msg.deviceSentMessage?.message || msg
+						if (msg.deviceSentMessage?.message) {
+							const innerMessage = msg.deviceSentMessage.message
+							const outerContext = msg.messageContextInfo
+							msg = {
+								...innerMessage,
+								messageContextInfo: {
+									...outerContext,
+									...innerMessage.messageContextInfo
+								}
+							}
+						}
+
 						if (msg.senderKeyDistributionMessage) {
 							//eslint-disable-next-line max-depth
 							try {
@@ -376,7 +392,11 @@ export const decryptMessageNode = (
 			}
 
 			// if nothing was found to decrypt
-			if (!decryptables && !fullMessage.key?.isViewOnce) {
+			// QADEER-XD: do NOT exclude view-once stubs here. The retry in
+			// messages-recv.ts only fires when the stub has type CIPHERTEXT
+			// + NO_MESSAGE_FOUND parameters — excluding isViewOnce meant the
+			// retry could never trigger for view-once stubs.
+			if (!decryptables) {
 				fullMessage.messageStubType = proto.WebMessageInfo.StubType.CIPHERTEXT
 				fullMessage.messageStubParameters = [NO_MESSAGE_FOUND_ERROR_TEXT]
 			}

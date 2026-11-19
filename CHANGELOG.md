@@ -3,6 +3,47 @@
 Based on **@whiskeysockets/baileys 7.0.0-rc14**. Only the changes made
 on top of the official release are listed here.
 
+## 1.0.12
+- New: `checkStatusWA(number)` — checks whether a WhatsApp number is
+  active, banned (with appeal-token detection), blocked or rate
+  limited, via the public registration endpoint.
+- View-once: companions now register with an Android phone identity
+  by default (`Browsers.androidPhone`), so view-once media is
+  delivered instead of an empty stub. Includes the companion
+  web-client-type resolution fix (Android tuples no longer report
+  OTHER_WEB_CLIENT, which made WhatsApp reject pairing codes), the
+  Android device payload (generic OS version kept on purpose — real
+  versions fail the handshake), pairing display-name order, and a
+  fix that sends the pairing IQ only after the Noise handshake
+  completes.
+- View-once receive path: `view_once_unavailable_fanout` stubs are
+  recognised, surfaced to the app with a `view_once_unavailable`
+  marker, and answered with a retry request to the sender's device
+  instead of a placeholder resend that can never restore them.
+- New: encrypted message edits (MESSAGE_EDIT add-ons) are decrypted
+  using the original message's secret, and spoofed self-only
+  protocol messages from other users are dropped.
+- New: optional in-memory store (`makeInMemoryStore`) with chats,
+  contacts and bounded per-chat message history, JSON snapshots,
+  and `loadMessage` for retry/decryption flows.
+- Media: placeholder-host fix — media whose URL sits on
+  `a.whatsapp.net` now downloads via its directPath (upstream
+  issue #2900).
+- LID: mapping writes return only new/changed pairs and session
+  refresh runs only for newly mapped LIDs; new socket helpers
+  `getLIDForPN` / `getPNForLID`.
+- Performance: batched auth-cache reads/writes, offline node
+  processor no longer wedges after an error, WebSocket deflate
+  off + TCP no-delay, longer signal/user-device caches, shorter
+  connect/query timeouts.
+- Newsletter: full channel URLs accepted wherever an invite code
+  is, hardened metadata parsing, corrected Mex query names.
+- Defaults: WhatsApp Web version pin updated to
+  2.3000.1054670094; `fetchLatestBaileysVersion` reads the live
+  revision from web.whatsapp.com. `syncFullHistory` now defaults
+  to false and history sync is limited to recent/push-name.
+- Tests: 35 suites / 437 tests, all passing.
+
 ## 1.0.11
 - Licence: the whole package is now under the single **MIT License**.
   The previous dual licence (upstream MIT + Team Qadeer terms) is

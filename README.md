@@ -24,6 +24,8 @@ upstream has not released yet:
 | Channel (newsletter) media | often invisible | fixed paths (1.0.2 + 1.0.7) |
 | Status mentions | not available | `sendStatusMention` (1.0.5) |
 | Retry double-encryption | present | fixed (1.0.7) |
+| View-once on Android companions | unavailable stubs | works out of the box (1.0.12) |
+| Ban / number status checker | not available | `checkStatusWA` (1.0.12) |
 
 Full per-version list: [CHANGELOG.md](CHANGELOG.md) · Plans: [ROADMAP.md](ROADMAP.md) · Runnable samples: [examples/](examples/)
 
@@ -73,7 +75,7 @@ For a smooth, error-free install, use these exact settings in your bot's "packag
 ```json
 {
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.11",
+    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.12",
     "sharp": "0.35.5",
     "wa-sticker-formatter": "4.4.4"
   },

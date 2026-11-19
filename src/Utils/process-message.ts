@@ -31,12 +31,13 @@ import {
 	jidNormalizedUser
 } from '../WABinary'
 import { aesDecryptGCM, hmacSign } from './crypto'
+import { decryptMessageEdit, isEncryptedMessageEdit } from './decrypt-message-edit'
 import { getKeyAuthor, toNumber } from './generics'
 import { downloadAndProcessHistorySyncNotification } from './history'
 import type { ILogger } from './logger'
 import { buildMergedTcTokenIndexWrite, resolveTcTokenJid } from './tc-token-utils'
 
-type ProcessMessageContext = {
+export type ProcessMessageContext = {
 	shouldProcessHistoryMsg: boolean
 	placeholderResendCache?: CacheStore
 	creds: AuthenticationCreds
@@ -178,7 +179,8 @@ export const isRealMessage = (message: WAMessage) => {
 		hasSomeContent &&
 		!normalizedContent?.protocolMessage &&
 		!normalizedContent?.reactionMessage &&
-		!normalizedContent?.pollUpdateMessage
+		!normalizedContent?.pollUpdateMessage &&
+		!isEncryptedMessageEdit(normalizedContent)
 	)
 }
 
@@ -290,7 +292,7 @@ export function decryptEventResponse(
 	}
 }
 
-const processMessage = async (
+export const processMessage = async (
 	message: WAMessage,
 	{
 		shouldProcessHistoryMsg,
@@ -320,6 +322,77 @@ const processMessage = async (
 	}
 
 	const content = normalizeMessageContent(message.message)
+
+	// Newer WhatsApp clients send edits as authenticated secretEncryptedMessage envelopes.
+	// Resolve the original message so its messageSecret can authenticate and decrypt the edit.
+	if (isEncryptedMessageEdit(content)) {
+		const encryptedEdit = content.secretEncryptedMessage
+		const target = encryptedEdit.targetMessageKey
+		if (!target?.id) {
+			logger?.warn({ msgId: message.key.id }, 'received encrypted MESSAGE_EDIT without a target message ID')
+			return
+		}
+
+		try {
+			const targetKey: WAMessageKey = {
+				...message.key,
+				...target,
+				remoteJid: target.remoteJid || message.key.remoteJid,
+				id: target.id,
+				fromMe: target.fromMe ?? message.key.fromMe,
+				participant: target.participant || message.key.participant
+			}
+			const originalContent = await getMessage(targetKey)
+			const normalizedOriginal = normalizeMessageContent(originalContent)
+			const messageSecret =
+				originalContent?.messageContextInfo?.messageSecret || normalizedOriginal?.messageContextInfo?.messageSecret
+			if (!messageSecret) {
+				logger?.warn(
+					{ targetMessageId: target.id, remoteJid: targetKey.remoteJid },
+					'cannot decrypt MESSAGE_EDIT: original message or messageSecret is missing from getMessage store'
+				)
+				return
+			}
+
+			const originalSenderJid = getKeyAuthor(targetKey, meId)
+			const editorJid = getKeyAuthor(message.key, meId)
+			const decodedEdit = decryptMessageEdit(encryptedEdit, {
+				originalSenderJid,
+				originalMsgId: target.id,
+				messageSecret,
+				editorJid
+			})
+			const editProtocol = decodedEdit.protocolMessage
+			if (editProtocol?.type !== proto.Message.ProtocolMessage.Type.MESSAGE_EDIT || !editProtocol.editedMessage) {
+				logger?.warn({ targetMessageId: target.id }, 'decrypted MESSAGE_EDIT payload did not contain an edit')
+				return
+			}
+
+			const editedMessage: WAMessage = {
+				key: { ...targetKey, id: editProtocol.key?.id || target.id },
+				message: {},
+				messageTimestamp: message.messageTimestamp
+			}
+			cleanMessage(editedMessage, creds.me!.id, creds.me!.lid!)
+			ev.emit('messages.update', [
+				{
+					key: editedMessage.key,
+					update: {
+						message: { editedMessage: { message: editProtocol.editedMessage } },
+						messageTimestamp: editProtocol.timestampMs
+							? Math.floor(toNumber(editProtocol.timestampMs) / 1000)
+							: message.messageTimestamp
+					}
+				}
+			])
+
+			logger?.debug({ targetMessageId: editedMessage.key.id }, 'decrypted encrypted WhatsApp message edit')
+		} catch (err) {
+			logger?.warn({ err, targetMessageId: target.id }, 'failed to decrypt encrypted WhatsApp MESSAGE_EDIT')
+		}
+
+		return
+	}
 
 	// unarchive chat if it's a real message, or someone reacted to our message
 	// and we've the unarchive chats setting on
@@ -516,10 +589,18 @@ const processMessage = async (
 
 				break
 			case proto.Message.ProtocolMessage.Type.MESSAGE_EDIT:
+				if (!protocolMsg.key?.id) {
+					logger?.warn(
+						{ msgId: message.key.id, remoteJid: message.key.remoteJid },
+						'received legacy MESSAGE_EDIT without a target message ID; skipping malformed update'
+					)
+					break
+				}
+
 				ev.emit('messages.update', [
 					{
-						// flip the sender / fromMe properties because they're in the perspective of the sender
-						key: { ...message.key, id: protocolMsg.key?.id },
+						// Keep envelope addressing, but target the original message ID.
+						key: { ...message.key, id: protocolMsg.key.id },
 						update: {
 							message: {
 								editedMessage: {

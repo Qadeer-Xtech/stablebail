@@ -7,6 +7,26 @@ import { getBinaryNodeChild, getBinaryNodeChildren, S_WHATSAPP_NET } from '../WA
 import { makeGroupsSocket } from './groups'
 import { executeWMexQuery as genericExecuteWMexQuery } from './mex'
 
+/** Accept either a bare invite code or a full WhatsApp channel URL. */
+const extractNewsletterInviteCode = (value: string): string => {
+	const trimmed = value.trim()
+	if (!trimmed) {
+		throw new Error('Newsletter invite code or channel URL is required')
+	}
+
+	try {
+		const url = new URL(trimmed)
+		if (url.hostname === 'whatsapp.com' || url.hostname === 'www.whatsapp.com') {
+			const match = url.pathname.match(/^\/channel\/([^/]+)\/?$/)
+			if (match?.[1]) return decodeURIComponent(match[1])
+		}
+	} catch {
+		// A bare invite code is expected and should pass through unchanged.
+	}
+
+	return trimmed
+}
+
 const parseNewsletterCreateResponse = (response: NewsletterCreateResponse): NewsletterMetadata => {
 	const { id, thread_metadata: thread, viewer_metadata: viewer } = response
 	return {
@@ -33,12 +53,43 @@ const parseNewsletterMetadata = (result: unknown): NewsletterMetadata | null => 
 		return null
 	}
 
+	// Already-flat shape: { id, name, invite, ... }
 	if ('id' in result && typeof result.id === 'string') {
+		// If it also has thread_metadata, parse it properly rather than returning raw.
+		const r = result as Record<string, unknown>
+		if (r.thread_metadata && typeof r.thread_metadata === 'object') {
+			return parseNewsletterCreateResponse(result as NewsletterCreateResponse)
+		}
+
 		return result as NewsletterMetadata
 	}
 
-	if ('result' in result && typeof result.result === 'object' && result.result !== null && 'id' in result.result) {
-		return result.result as NewsletterMetadata
+	// Wrapped in result key (legacy)
+	if ('result' in result && typeof result.result === 'object' && result.result !== null) {
+		return parseNewsletterMetadata(result.result)
+	}
+
+	// Raw GraphQL shape from METADATA query:
+	// { id, state, thread_metadata: { name: { text }, invite, ... }, viewer_metadata: { mute } }
+	// This is identical to NewsletterCreateResponse — reuse that parser.
+	const r = result as Record<string, unknown>
+	if (r.thread_metadata && typeof r.thread_metadata === 'object') {
+		try {
+			return parseNewsletterCreateResponse(result as NewsletterCreateResponse)
+		} catch {
+			// Partial data — build best-effort flat object
+			const thread = r.thread_metadata as Record<string, unknown>
+			const nameObj = thread.name as Record<string, unknown> | undefined
+			const name = typeof thread.name === 'string' ? thread.name : ((nameObj?.text as string | undefined) ?? 'Unknown')
+			return {
+				id: (r.id as string) ?? '',
+				name,
+				invite: thread.invite as string | undefined,
+				description: (thread.description as Record<string, unknown> | undefined)?.text as string | undefined,
+				subscribers: thread.subscribers_count ? parseInt(thread.subscribers_count as string, 10) : undefined,
+				verification: thread.verification as 'VERIFIED' | 'UNVERIFIED' | undefined
+			}
+		}
 	}
 
 	return null
@@ -61,6 +112,29 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 			}
 		}
 		return executeWMexQuery(variables, QueryIds.UPDATE_METADATA, 'xwa2_newsletter_update')
+	}
+
+	const newsletterFollow = (jid: string) => {
+		return executeWMexQuery({ newsletter_id: jid }, QueryIds.FOLLOW, XWAPaths.xwa2_newsletter_join_v2)
+	}
+
+	const newsletterReactMessage = async (jid: string, serverId: string, reaction?: string) => {
+		await query({
+			tag: 'message',
+			attrs: {
+				to: jid,
+				...(reaction ? {} : { edit: '7' }),
+				type: 'reaction',
+				server_id: serverId,
+				id: generateMessageTag()
+			},
+			content: [
+				{
+					tag: 'reaction',
+					attrs: reaction ? { code: reaction } : {}
+				}
+			]
+		})
 	}
 
 	return {
@@ -99,12 +173,13 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 		},
 
 		newsletterMetadata: async (type: 'invite' | 'jid', key: string) => {
+			const lookupKey = type === 'invite' ? extractNewsletterInviteCode(key) : key.trim()
 			const variables = {
 				fetch_creation_time: true,
 				fetch_full_image: true,
 				fetch_viewer_metadata: true,
 				input: {
-					key,
+					key: lookupKey,
 					type: type.toUpperCase()
 				}
 			}
@@ -135,9 +210,7 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 			return parseNewsletterMetadata(result)
 		},
 
-		newsletterFollow: (jid: string) => {
-			return executeWMexQuery({ newsletter_id: jid }, QueryIds.FOLLOW, XWAPaths.xwa2_newsletter_join_v2)
-		},
+		newsletterFollow,
 
 		newsletterUnfollow: (jid: string) => {
 			return executeWMexQuery({ newsletter_id: jid }, QueryIds.UNFOLLOW, XWAPaths.xwa2_newsletter_leave_v2)
@@ -182,24 +255,7 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 			return executeWMexQuery(variables, QueryIds.UPDATE_METADATA, 'xwa2_newsletter_update')
 		},
 
-		newsletterReactMessage: async (jid: string, serverId: string, reaction?: string) => {
-			await query({
-				tag: 'message',
-				attrs: {
-					to: jid,
-					...(reaction ? {} : { edit: '7' }),
-					type: 'reaction',
-					server_id: serverId,
-					id: generateMessageTag()
-				},
-				content: [
-					{
-						tag: 'reaction',
-						attrs: reaction ? { code: reaction } : {}
-					}
-				]
-			})
-		},
+		newsletterReactMessage,
 
 		newsletterFetchMessages: async (
 			...args: [typeOrJid: string, keyOrCount: string | number, count?: number, after?: number, before?: number]

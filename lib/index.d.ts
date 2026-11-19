@@ -9,4 +9,5 @@ export * from './WAUSync/index.js';
 export type WASocket = ReturnType<typeof makeWASocket>;
 export { makeWASocket };
 export default makeWASocket;
+export * from './Store/make-in-memory-store.js';
 //# sourceMappingURL=index.d.ts.map

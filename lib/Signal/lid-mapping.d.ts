@@ -7,8 +7,16 @@ export declare class LIDMappingStore {
     private pnToLIDFunc?;
     private readonly inflightLIDLookups;
     private readonly inflightPNLookups;
+    private readonly storeMutex;
     constructor(keys: SignalKeyStoreWithTransaction, logger: ILogger, pnToLIDFunc?: (jids: string[]) => Promise<LIDMapping[] | undefined>);
-    storeLIDPNMappings(pairs: LIDMapping[]): Promise<void>;
+    /**
+     * Stores PN↔LID mappings and returns only pairs that were new or changed.
+     * A separate mutex serializes read-compare-write without re-entering the key-store transaction mutex.
+     */
+    storeLIDPNMappings(pairs: LIDMapping[]): Promise<{
+        pnUser: string;
+        lidUser: string;
+    }[]>;
     getLIDForPN(pn: string): Promise<string | null>;
     getLIDsForPNs(pns: string[]): Promise<LIDMapping[] | null>;
     private _getLIDsForPNsImpl;

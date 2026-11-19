@@ -28,10 +28,19 @@ export class WebSocketClient extends AbstractSocketClient {
 			headers: this.config.options?.headers as {},
 			handshakeTimeout: this.config.connectTimeoutMs,
 			timeout: this.config.connectTimeoutMs,
-			agent: this.config.agent
+			agent: this.config.agent,
+			// WhatsApp frames are already encrypted; deflate adds CPU cost with little benefit.
+			perMessageDeflate: false
 		})
 
 		this.socket.setMaxListeners(0)
+		// Disable Nagle delays for frequent small ACK/control frames.
+		this.socket.on('open', () => {
+			const transport = this.socket as WebSocket & {
+				_socket?: { setNoDelay: (noDelay?: boolean) => void }
+			}
+			transport?._socket?.setNoDelay(true)
+		})
 
 		const events = ['close', 'error', 'upgrade', 'message', 'open', 'ping', 'pong', 'unexpected-response']
 

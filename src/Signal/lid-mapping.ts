@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache'
 import type { LIDMapping, SignalKeyStoreWithTransaction } from '../Types'
 import type { ILogger } from '../Utils/logger'
+import { makeMutex } from '../Utils/make-mutex'
 import { isHostedPnUser, isLidUser, isPnUser, jidDecode, jidNormalizedUser, WAJIDDomains } from '../WABinary'
 
 export class LIDMappingStore {
@@ -16,6 +17,7 @@ export class LIDMappingStore {
 
 	private readonly inflightLIDLookups = new Map<string, Promise<LIDMapping[] | null>>()
 	private readonly inflightPNLookups = new Map<string, Promise<LIDMapping[] | null>>()
+	private readonly storeMutex = makeMutex()
 
 	constructor(
 		keys: SignalKeyStoreWithTransaction,
@@ -27,8 +29,12 @@ export class LIDMappingStore {
 		this.logger = logger
 	}
 
-	async storeLIDPNMappings(pairs: LIDMapping[]): Promise<void> {
-		if (pairs.length === 0) return
+	/**
+	 * Stores PN↔LID mappings and returns only pairs that were new or changed.
+	 * A separate mutex serializes read-compare-write without re-entering the key-store transaction mutex.
+	 */
+	async storeLIDPNMappings(pairs: LIDMapping[]): Promise<{ pnUser: string; lidUser: string }[]> {
+		if (pairs.length === 0) return []
 
 		const validatedPairs: Array<{ pnUser: string; lidUser: string }> = []
 		for (const { lid, pn } of pairs) {
@@ -40,71 +46,73 @@ export class LIDMappingStore {
 			const lidDecoded = jidDecode(lid)
 			const pnDecoded = jidDecode(pn)
 			if (!lidDecoded || !pnDecoded) continue
-
 			validatedPairs.push({ pnUser: pnDecoded.user, lidUser: lidDecoded.user })
 		}
 
-		if (validatedPairs.length === 0) return
+		if (validatedPairs.length === 0) return []
 
-		const cacheMissSet = new Set<string>()
-		const existingMappings = new Map<string, string>()
-
-		for (const { pnUser } of validatedPairs) {
-			const cached = this.mappingCache.get(`pn:${pnUser}`)
-			if (cached) {
-				existingMappings.set(pnUser, cached)
-			} else {
-				cacheMissSet.add(pnUser)
-			}
+		// Hot path: unchanged mappings already in memory never wait behind a slow mapping write.
+		if (validatedPairs.every(({ pnUser, lidUser }) => this.mappingCache.get(`pn:${pnUser}`) === lidUser)) {
+			return []
 		}
 
-		if (cacheMissSet.size > 0) {
-			const cacheMisses = [...cacheMissSet]
-			this.logger.trace(`Batch fetching ${cacheMisses.length} LID mappings from database`)
-			const stored = await this.keys.get('lid-mapping', cacheMisses)
+		return this.storeMutex.mutex(async () => {
+			const cacheMissSet = new Set<string>()
+			const existingMappings = new Map<string, string>()
+			for (const { pnUser } of validatedPairs) {
+				const cached = this.mappingCache.get(`pn:${pnUser}`)
+				if (cached) existingMappings.set(pnUser, cached)
+				else cacheMissSet.add(pnUser)
+			}
 
-			for (const pnUser of cacheMisses) {
-				const existingLidUser = stored[pnUser]
-				if (existingLidUser) {
-					existingMappings.set(pnUser, existingLidUser)
-					this.mappingCache.set(`pn:${pnUser}`, existingLidUser)
-					this.mappingCache.set(`lid:${existingLidUser}`, pnUser)
+			if (cacheMissSet.size > 0) {
+				const cacheMisses = [...cacheMissSet]
+				this.logger.trace(`Batch fetching ${cacheMisses.length} LID mappings from database`)
+				const stored = await this.keys.get('lid-mapping', cacheMisses)
+				for (const pnUser of cacheMisses) {
+					const existingLidUser = stored[pnUser]
+					if (existingLidUser) {
+						existingMappings.set(pnUser, existingLidUser)
+						this.mappingCache.set(`pn:${pnUser}`, existingLidUser)
+						this.mappingCache.set(`lid:${existingLidUser}`, pnUser)
+					}
 				}
 			}
-		}
 
-		const pairMap: { [_: string]: string } = {}
-		for (const { pnUser, lidUser } of validatedPairs) {
-			const existingLidUser = existingMappings.get(pnUser)
-			if (existingLidUser === lidUser) {
-				this.logger.debug({ pnUser, lidUser }, 'LID mapping already exists, skipping')
-				continue
+			const pairMap: Record<string, string> = {}
+			for (const { pnUser, lidUser } of validatedPairs) {
+				const existingLidUser = existingMappings.get(pnUser)
+				if (existingLidUser === lidUser) {
+					this.logger.debug({ pnUser, lidUser }, 'LID mapping already exists, skipping')
+					continue
+				}
+
+				pairMap[pnUser] = lidUser
 			}
 
-			pairMap[pnUser] = lidUser
-		}
+			if (Object.keys(pairMap).length === 0) return []
 
-		if (Object.keys(pairMap).length === 0) return
+			this.logger.trace({ pairMap }, `Storing ${Object.keys(pairMap).length} pn mappings`)
+			const batchData: Record<string, string> = {}
+			for (const [pnUser, lidUser] of Object.entries(pairMap)) {
+				batchData[pnUser] = lidUser
+				batchData[`${lidUser}_reverse`] = pnUser
+			}
 
-		this.logger.trace({ pairMap }, `Storing ${Object.keys(pairMap).length} pn mappings`)
+			await this.keys.transaction(async () => {
+				await this.keys.set({ 'lid-mapping': batchData })
+			}, 'lid-mapping')
 
-		const batchData: { [key: string]: string } = {}
-		for (const [pnUser, lidUser] of Object.entries(pairMap)) {
-			batchData[pnUser] = lidUser
-			batchData[`${lidUser}_reverse`] = pnUser
-		}
+			for (const [pnUser, lidUser] of Object.entries(pairMap)) {
+				const previousLidUser = existingMappings.get(pnUser)
+				if (previousLidUser && previousLidUser !== lidUser) this.mappingCache.delete(`lid:${previousLidUser}`)
+				this.mappingCache.set(`pn:${pnUser}`, lidUser)
+				this.mappingCache.set(`lid:${lidUser}`, pnUser)
+			}
 
-		await this.keys.transaction(async () => {
-			await this.keys.set({ 'lid-mapping': batchData })
-		}, 'lid-mapping')
-
-		// Update cache after successful DB write
-		for (const [pnUser, lidUser] of Object.entries(pairMap)) {
-			this.mappingCache.set(`pn:${pnUser}`, lidUser)
-			this.mappingCache.set(`lid:${lidUser}`, pnUser)
-		}
+			return Object.entries(pairMap).map(([pnUser, lidUser]) => ({ pnUser, lidUser }))
+		})
 	}
-
 	async getLIDForPN(pn: string): Promise<string | null> {
 		return (await this.getLIDsForPNs([pn]))?.[0]?.lid || null
 	}

@@ -60,10 +60,16 @@ export function makeCacheableSignalKeyStore(
 				const data: { [_: string]: SignalDataTypeMap[typeof type] } = {}
 				const idsToFetch: string[] = []
 
-				for (const id of ids) {
-					const item = (await cache.get<SignalDataTypeMap[typeof type]>(getUniqueId(type, id))) as any
+				// Cache adapters are asynchronous; read a batch concurrently instead of
+				// serially awaiting every key while holding the cache mutex.
+				const cachedItems = await Promise.all(
+					ids.map(id => cache.get<SignalDataTypeMap[typeof type]>(getUniqueId(type, id)))
+				)
+				for (let index = 0; index < ids.length; index++) {
+					const id = ids[index]!
+					const item = cachedItems[index]
 					if (typeof item !== 'undefined') {
-						data[id] = item
+						data[id] = item as unknown as SignalDataTypeMap[typeof type]
 					} else {
 						idsToFetch.push(id)
 					}
@@ -72,14 +78,16 @@ export function makeCacheableSignalKeyStore(
 				if (idsToFetch.length) {
 					logger?.trace({ items: idsToFetch.length }, 'loading from store')
 					const fetched = await store.get(type, idsToFetch)
-					for (const id of idsToFetch) {
-						const item = fetched[id]
-						if (item) {
-							data[id] = item
-							// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-							await cache.set(getUniqueId(type, id), item as SignalDataTypeMap[keyof SignalDataTypeMap])
-						}
-					}
+					await Promise.all(
+						idsToFetch.map(async id => {
+							const item = fetched[id]
+							if (item) {
+								data[id] = item as unknown as SignalDataTypeMap[typeof type]
+								// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+								await cache.set(getUniqueId(type, id), item as SignalDataTypeMap[keyof SignalDataTypeMap])
+							}
+						})
+					)
 				}
 
 				return data
@@ -88,13 +96,18 @@ export function makeCacheableSignalKeyStore(
 		async set(data) {
 			return cacheMutex.runExclusive(async () => {
 				let keys = 0
+				const cacheWrites: Promise<unknown>[] = []
 				for (const type in data) {
 					for (const id in data[type as keyof SignalDataTypeMap]) {
-						await cache.set(getUniqueId(type, id), data[type as keyof SignalDataTypeMap]![id]!)
+						cacheWrites.push(
+							Promise.resolve(cache.set(getUniqueId(type, id), data[type as keyof SignalDataTypeMap]![id]!))
+						)
 						keys += 1
 					}
 				}
 
+				// Preserve cache-before-store ordering, but avoid serial per-key awaits.
+				await Promise.all(cacheWrites)
 				logger?.trace({ keys }, 'updated cache')
 				await store.set(data)
 			})
