@@ -19,8 +19,13 @@ const getUserAgent = (config: SocketConfig): proto.ClientPayload.IUserAgent => {
 	// so device must be 'Android' for .vv — but osVersion/osBuildNumber
 	// stay generic '0.1' (upstream values) so the pairing handshake does
 	// not fail with a 516 stream error (real Android versions break it).
-	// Platform stays ANDROID for Android, WEB otherwise (upstream).
 	const isAndroid = config.browser[1].toLocaleLowerCase().includes('android')
+	// Every non-Android tuple identifies as a Mac (platform MACOS,
+	// device 'Mac', real OS version/build): since WhatsApp's November
+	// 2026 update the server rejects Platform.WEB companions, so a
+	// Windows/Ubuntu tuple keeping WEB/'Desktop' can no longer pair.
+	// The Android branch above deliberately keeps our own values —
+	// they are the live-proven view-once combination.
 	return {
 		appVersion: {
 			primary: config.version[0],
@@ -29,11 +34,11 @@ const getUserAgent = (config: SocketConfig): proto.ClientPayload.IUserAgent => {
 		},
 		platform: isAndroid
 			? proto.ClientPayload.UserAgent.Platform.ANDROID
-			: proto.ClientPayload.UserAgent.Platform.WEB,
+			: proto.ClientPayload.UserAgent.Platform.MACOS,
 		releaseChannel: proto.ClientPayload.UserAgent.ReleaseChannel.RELEASE,
-		osVersion: '0.1',
-		device: isAndroid ? 'Android' : 'Desktop',
-		osBuildNumber: '0.1',
+		osVersion: isAndroid ? '0.1' : '14.4.1',
+		device: isAndroid ? 'Android' : 'Mac',
+		osBuildNumber: isAndroid ? '0.1' : '23E224',
 		localeLanguageIso6391: 'en',
 
 		mnc: '000',
