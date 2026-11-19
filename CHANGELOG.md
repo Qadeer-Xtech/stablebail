@@ -3,6 +3,15 @@
 Based on **@whiskeysockets/baileys 7.0.0-rc14**. Only the changes made
 on top of the official release are listed here.
 
+## 1.0.13
+- Status fix: WhatsApp now delivers statuses as dedicated `<status>`
+  stanzas instead of `<message>` stanzas from status@broadcast. The
+  library previously only acknowledged these stanzas and silently
+  dropped their content, so bots never received live statuses and
+  auto status view/react features could not work. Status stanzas are
+  now processed through the normal message pipeline (decrypted and
+  emitted via `messages.upsert`), restoring live status delivery.
+
 ## 1.0.12
 - New: `checkStatusWA(number)` — checks whether a WhatsApp number is
   active, banned (with appeal-token detection), blocked or rate

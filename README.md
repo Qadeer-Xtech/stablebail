@@ -75,7 +75,7 @@ For a smooth, error-free install, use these exact settings in your bot's "packag
 ```json
 {
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.12",
+    "@whiskeysockets/baileys": "npm:@qadeer-xtech/stablebail@1.0.13",
     "sharp": "0.35.5",
     "wa-sticker-formatter": "4.4.4"
   },

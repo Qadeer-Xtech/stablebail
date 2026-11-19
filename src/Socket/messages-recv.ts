@@ -1983,12 +1983,13 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	// instead of <message from="status@broadcast">. It isn't decoded here, but it
 	// must be acked: otherwise the server ends the stream ~50 minutes later with
 	// <stream:error><ack class="status"/></stream:error> and redelivers it on reconnect.
+	// WhatsApp now delivers statuses as dedicated <status> stanzas instead of
+	// <message> stanzas from status@broadcast. Processing them through the
+	// normal message pipeline decrypts them and emits messages.upsert, which
+	// is what bots rely on for status view/react features. (Previously this
+	// handler only acked the stanza and silently dropped the content.)
 	const handleStatus = async (node: BinaryNode) => {
-		try {
-			await sendMessageAck(node)
-		} catch (error) {
-			onUnexpectedError(error as Error, 'acking status stanza')
-		}
+		await handleMessage(node)
 	}
 
 	const offlineNodeProcessor = makeOfflineNodeProcessor(
@@ -2058,7 +2059,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
 	ws.on('CB:status', async (node: BinaryNode) => {
 		// processNode acks ignored JIDs itself, outside handleStatus' try/catch
-		await processNode('status', node, 'acking status stanza', handleStatus).catch(error => onUnexpectedError(error as Error, 'acking status stanza'))
+		await processNode('status', node, 'processing status stanza', handleStatus).catch(error => onUnexpectedError(error as Error, 'processing status stanza'))
 	})
 	ws.on('CB:ack,class:message', (node: BinaryNode) => {
 		handleBadAck(node).catch(error => onUnexpectedError(error, 'handling bad ack'))
