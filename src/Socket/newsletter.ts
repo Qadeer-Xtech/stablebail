@@ -164,6 +164,49 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 			)
 		},
 
+		newsletterFollowers: async (jid: string, count = 100) => {
+			const response = await executeWMexQuery<{
+				followers?: {
+					edges?: {
+						node?: {
+							id?: string
+							pn?: string
+							display_name?: string
+							username_info?: { username?: string }
+						}
+						role?: string
+						follow_time?: string
+					}[]
+				}
+			}>({ input: { newsletter_id: jid, count } }, QueryIds.FOLLOWERS, XWAPaths.xwa2_newsletter_followers)
+			return (response?.followers?.edges ?? []).map(edge => ({
+				id: edge?.node?.id,
+				phoneNumber: edge?.node?.pn,
+				displayName: edge?.node?.display_name,
+				username: edge?.node?.username_info?.username,
+				role: edge?.role,
+				followTime: edge?.follow_time
+			}))
+		},
+
+		newsletterInsights: async (jid: string, metrics: string[] = ['NET_FOLLOWS', 'UNFOLLOWS']) => {
+			return executeWMexQuery(
+				{ input: { newsletter_id: jid, metrics } },
+				QueryIds.INSIGHTS,
+				XWAPaths.xwa2_newsletter_admin_insights
+			)
+		},
+
+		newsletterPendingAdminInvites: async (jid: string) => {
+			const response = await executeWMexQuery<{
+				pending_admin_invites?: { user?: { id?: string; pn?: string } }[]
+			}>({ newsletter_id: jid }, QueryIds.PENDING_ADMIN_INVITES, XWAPaths.xwa2_newsletter_admin)
+			return (response?.pending_admin_invites ?? []).map(invite => ({
+				id: invite?.user?.id,
+				phoneNumber: invite?.user?.pn
+			}))
+		},
+
 		newsletterSubscribed: async () => {
 			return executeWMexQuery({}, QueryIds.SUBSCRIBED, XWAPaths.xwa2_newsletter_subscribed)
 		},

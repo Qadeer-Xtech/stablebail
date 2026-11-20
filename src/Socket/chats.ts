@@ -101,6 +101,30 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	} = sock
 
 	const getLIDForPN = signalRepository.lidMapping.getLIDForPN.bind(signalRepository.lidMapping)
+	const getPNForLID = signalRepository.lidMapping.getPNForLID.bind(signalRepository.lidMapping)
+
+	// Day 2 (LOFT @loftxmd/loft-bailey 1.0.1): resolve either side of a
+	// PN<->LID identity pair. Returns { lid, phoneNumber } with the
+	// unmapped side undefined (no throw); only an invalid JID form throws.
+	// Bots need this wherever a group sender arrives as a LID but an
+	// admin/anti check only knows the phone number (or vice versa).
+	const findUserId = async (pnLid: string) => {
+		const normalizedJid = jidNormalizedUser(pnLid)
+		const userId: { lid?: string; phoneNumber?: string } = {
+			lid: undefined,
+			phoneNumber: undefined
+		}
+		if (isPnUser(normalizedJid) || isHostedPnUser(normalizedJid)) {
+			userId.phoneNumber = normalizedJid
+			userId.lid = (await getLIDForPN(normalizedJid)) ?? undefined
+		} else if (isLidUser(normalizedJid) || isHostedLidUser(normalizedJid)) {
+			userId.lid = normalizedJid
+			userId.phoneNumber = (await getPNForLID(normalizedJid)) ?? undefined
+		} else {
+			throw new Boom('Invalid id input to find user ids', { statusCode: 400 })
+		}
+		return userId
+	}
 
 	let privacySettings: { [_: string]: string } | undefined
 
@@ -1522,6 +1546,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		appStatePatchMutex,
 		notificationMutex,
 		fetchPrivacySettings,
+		findUserId,
 		upsertMessage,
 		appPatch,
 		sendPresenceUpdate,

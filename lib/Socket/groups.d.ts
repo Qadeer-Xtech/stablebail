@@ -68,6 +68,10 @@ export declare const makeGroupsSocket: (config: SocketConfig) => {
     fetchPrivacySettings: (force?: boolean) => Promise<{
         [_: string]: string;
     }>;
+    findUserId: (pnLid: string) => Promise<{
+        lid?: string;
+        phoneNumber?: string;
+    }>;
     upsertMessage: (msg: import("../Types/index.js").WAMessage, type: import("../Types/index.js").MessageUpsertType) => Promise<void>;
     appPatch: (patchCreate: import("../Types/index.js").WAPatchCreate) => Promise<void>;
     sendPresenceUpdate: (type: import("../Types/index.js").WAPresence, toJid?: string) => Promise<void>;
@@ -153,6 +157,10 @@ export declare const makeGroupsSocket: (config: SocketConfig) => {
         jid: string;
         exists: boolean;
     }[] | undefined>;
+    resolveUsername: (handle: string, usernameKey?: string) => Promise<{
+        jid: string;
+        lid: string | undefined;
+    } | null>;
     getLIDForPN: (pn: string) => Promise<string | null>;
     getPNForLID: (lid: string) => Promise<string | null>;
     fetchAccountReachoutTimelock: () => Promise<import("../Types/index.js").ReachoutTimelockState>;

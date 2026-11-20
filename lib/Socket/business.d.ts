@@ -60,6 +60,19 @@ export declare const makeBusinessSocket: (config: SocketConfig) => {
     newsletterSubscribers: (jid: string) => Promise<{
         subscribers: number;
     }>;
+    newsletterFollowers: (jid: string, count?: number) => Promise<{
+        id: string | undefined;
+        phoneNumber: string | undefined;
+        displayName: string | undefined;
+        username: string | undefined;
+        role: string | undefined;
+        followTime: string | undefined;
+    }[]>;
+    newsletterInsights: (jid: string, metrics?: string[]) => Promise<unknown>;
+    newsletterPendingAdminInvites: (jid: string) => Promise<{
+        id: string | undefined;
+        phoneNumber: string | undefined;
+    }[]>;
     newsletterSubscribed: () => Promise<unknown>;
     newsletterFetchAllSubscribe: () => Promise<unknown>;
     newsletterMetadata: (type: "invite" | "jid", key: string) => Promise<import("../index.js").NewsletterMetadata | null>;
@@ -141,6 +154,10 @@ export declare const makeBusinessSocket: (config: SocketConfig) => {
     notificationMutex: {
         mutex<T>(code: () => Promise<T> | T): Promise<T>;
     };
+    findUserId: (pnLid: string) => Promise<{
+        lid?: string;
+        phoneNumber?: string;
+    }>;
     upsertMessage: (msg: import("../index.js").WAMessage, type: import("../index.js").MessageUpsertType) => Promise<void>;
     appPatch: (patchCreate: import("../index.js").WAPatchCreate) => Promise<void>;
     sendPresenceUpdate: (type: import("../index.js").WAPresence, toJid?: string) => Promise<void>;
@@ -226,6 +243,10 @@ export declare const makeBusinessSocket: (config: SocketConfig) => {
         jid: string;
         exists: boolean;
     }[] | undefined>;
+    resolveUsername: (handle: string, usernameKey?: string) => Promise<{
+        jid: string;
+        lid: string | undefined;
+    } | null>;
     getLIDForPN: (pn: string) => Promise<string | null>;
     getPNForLID: (lid: string) => Promise<string | null>;
     fetchAccountReachoutTimelock: () => Promise<import("../index.js").ReachoutTimelockState>;

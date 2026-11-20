@@ -34,6 +34,10 @@ export declare const makeChatsSocket: (config: SocketConfig) => {
     fetchPrivacySettings: (force?: boolean) => Promise<{
         [_: string]: string;
     }>;
+    findUserId: (pnLid: string) => Promise<{
+        lid?: string;
+        phoneNumber?: string;
+    }>;
     upsertMessage: (msg: WAMessage, type: MessageUpsertType) => Promise<void>;
     appPatch: (patchCreate: WAPatchCreate) => Promise<void>;
     sendPresenceUpdate: (type: WAPresence, toJid?: string) => Promise<void>;
@@ -119,6 +123,10 @@ export declare const makeChatsSocket: (config: SocketConfig) => {
         jid: string;
         exists: boolean;
     }[] | undefined>;
+    resolveUsername: (handle: string, usernameKey?: string) => Promise<{
+        jid: string;
+        lid: string | undefined;
+    } | null>;
     getLIDForPN: (pn: string) => Promise<string | null>;
     getPNForLID: (lid: string) => Promise<string | null>;
     fetchAccountReachoutTimelock: () => Promise<import("../Types/index.js").ReachoutTimelockState>;

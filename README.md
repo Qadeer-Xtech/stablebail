@@ -10,6 +10,104 @@ Based on **@whiskeysockets/baileys 7.0.0-rc14** (MIT). Source, issues and change
 
 [![CI](https://github.com/Qadeer-Xtech/stablebail/actions/workflows/ci.yml/badge.svg)](https://github.com/Qadeer-Xtech/stablebail/actions/workflows/ci.yml)
 
+## Browser identity setup (in your `index.js`)
+
+The `browser` option in `makeWASocket` decides how your bot appears to
+WhatsApp. It changes what WhatsApp sends your bot, so pick carefully —
+nothing else in your bot code changes, and your existing session keeps
+working; the identity simply applies on the next connect.
+
+**1. Ubuntu / web identity** — the bot looks like a browser on Ubuntu.
+
+```js
+browser: Browsers.ubuntu('Chrome')
+```
+
+- **Who it is for:** simple bots — commands, groups, chats — that do
+  not need phone-class media.
+- **How it behaves:** pairing works the normal way and channel
+  (newsletter) data arrives as plain JSON. But WhatsApp treats
+  browsers as web companions: **view-once photos/videos can arrive as
+  empty stubs** with no media inside. If your bot needs view-once,
+  use setup 2 or 3.
+
+**2. Android phone identity** — the bot presents itself as an Android
+phone.
+
+```js
+browser: Browsers.androidPhone('Chrome')
+```
+
+- **Who it is for:** bots that need full media, above all view-once.
+- **What changes in the bot after this setup:** WhatsApp treats the
+  bot as a phone-class device, so **view-once media actually arrives**
+  instead of empty stubs. One side effect: on Android sessions,
+  channel data can arrive in a compact **binary format** instead of
+  JSON — StableBail decodes that format fully, so your channel
+  features (name, followers, description, picture) keep working.
+
+**3. Dynamic identity (recommended)** — pair easily, run as Android.
+
+```js
+const getBrowserIdentity = (registered) =>
+	registered ? Browsers.androidPhone('Chrome') : Browsers.macOS('Safari')
+
+// inside makeWASocket:
+browser: getBrowserIdentity(state.creds.registered)
+```
+
+- **Who it is for:** most bots — this is the setup we recommend.
+- **How it works:** while the session is fresh (not yet registered),
+  the Safari/Mac identity pairs the fastest and most reliably. As
+  soon as the session is registered, the identity switches to the
+  Android phone identity by itself on the next connect — **no
+  re-pairing, no code change** — and the bot gets the full Android
+  behaviour from setup 2, including view-once media.
+
+**In short:** Ubuntu = simple web bot, no view-once. Android =
+phone-class bot, view-once works. Dynamic = easy pairing first,
+Android powers after — the best of both.
+
+## View-once — the fix, and the bot code for it
+
+**The problem:** on browser/web identities, WhatsApp delivers
+view-once photos and videos to companion devices as *empty stubs* —
+the message arrives, but there is no media inside it. No bot code can
+recover media that never arrived.
+
+**The fix in StableBail:** when the bot runs on the Android phone
+identity, StableBail presents a real Android device in the connection
+user-agent (device = `Android`, not `Desktop`). WhatsApp then treats
+the bot as a phone-class device and delivers view-once media
+normally — it works out of the box, nothing to configure in the
+library.
+
+**The code you add in your bot (`index.js`):** just run the bot on
+the Android identity — or use the dynamic setup so pairing stays
+easy and Android takes over right after:
+
+```js
+const {
+	default: makeWASocket,
+	Browsers,
+	useMultiFileAuthState
+} = require('@whiskeysockets/baileys')
+
+const getBrowserIdentity = (registered) =>
+	registered ? Browsers.androidPhone('Chrome') : Browsers.macOS('Safari')
+
+const { state, saveCreds } = await useMultiFileAuthState('auth')
+
+const sock = makeWASocket({
+	auth: state,
+	browser: getBrowserIdentity(state.creds.registered)
+})
+```
+
+That is all. Pair once (Safari identity), and from the next connect
+onward the bot runs as Android and view-once media arrives — your
+view-once commands can then download the quoted message as usual.
+
 ## Why StableBail instead of stock Baileys?
 
 Same API — StableBail is Baileys 7.0.0-rc14 plus reviewed fixes that
