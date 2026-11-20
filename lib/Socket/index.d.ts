@@ -102,19 +102,6 @@ declare const makeWASocket: (config: UserFacingSocketConfig) => {
     newsletterSubscribers: (jid: string) => Promise<{
         subscribers: number;
     }>;
-    newsletterFollowers: (jid: string, count?: number) => Promise<{
-        id: string | undefined;
-        phoneNumber: string | undefined;
-        displayName: string | undefined;
-        username: string | undefined;
-        role: string | undefined;
-        followTime: string | undefined;
-    }[]>;
-    newsletterInsights: (jid: string, metrics?: string[]) => Promise<unknown>;
-    newsletterPendingAdminInvites: (jid: string) => Promise<{
-        id: string | undefined;
-        phoneNumber: string | undefined;
-    }[]>;
     newsletterSubscribed: () => Promise<unknown>;
     newsletterFetchAllSubscribe: () => Promise<unknown>;
     newsletterMetadata: (type: "invite" | "jid", key: string) => Promise<import("../index.js").NewsletterMetadata | null>;

@@ -280,136 +280,6 @@ const recoverNewsletterId = (node: BinaryNode | undefined): string | null => {
 	return found.size === 1 ? [...found][0]! : null
 }
 
-const BINARY_ID_PATTERN = /(\d{6,}@lid|\d{6,}@s\.whatsapp\.net)/g
-const BINARY_ROLE_TOKENS = ['SUBSCRIBER', 'OWNER', 'ADMIN', 'MEMBER']
-
-// Same field framing as splitBinaryFields, but the admin answers may
-// carry fewer than three fields, so no minimum count is enforced here.
-const splitBinaryFieldsAny = (buf: Buffer): Buffer[] | null => {
-	if (buf.length < 2 || buf[0] !== 4) {
-		return null
-	}
-
-	const fields: Buffer[] = []
-	let i = 1
-	while (i < buf.length) {
-		const header = readBinaryVarint(buf, i)
-		if (!header) {
-			return null
-		}
-
-		const length = Math.floor(header.value / 2)
-		const end = header.next + length
-		if (end > buf.length) {
-			return null
-		}
-
-		fields.push(buf.subarray(header.next, end))
-		i = end
-	}
-
-	return fields.length ? fields : null
-}
-
-const tokenizeBinaryRoles = (field: Buffer): string[] => {
-	const text = field.toString('latin1')
-	const roles: string[] = []
-	let i = 0
-	while (i < text.length) {
-		const hit = BINARY_ROLE_TOKENS.find(t => text.startsWith(t, i))
-		if (!hit) {
-			return []
-		}
-
-		roles.push(hit)
-		i += hit.length
-	}
-
-	return roles
-}
-
-// The compact binary form of a followers answer carries the follower
-// ids as one concatenated plain-text field (LID and phone ids mixed),
-// a role field, and further packed records whose layout is not
-// decoded. Rebuild the JSON shape the followers parser already
-// understands. Roles are mapped onto followers only when there is
-// exactly one role per follower — a shorter role list does not say
-// which followers it belongs to, so it is left off rather than
-// guessed.
-export const decodeBinaryNewsletterFollowers = (
-	content: BinaryNode['content']
-): Record<string, unknown> | null => {
-	if (!content || Array.isArray(content) || typeof content === 'string') {
-		return null
-	}
-
-	const fields = splitBinaryFieldsAny(Buffer.from(content))
-	if (!fields) {
-		return null
-	}
-
-	const ids = fields[0]!.toString('latin1').match(BINARY_ID_PATTERN) ?? []
-	if (!ids.length) {
-		return null
-	}
-
-	const roles = fields[1] ? tokenizeBinaryRoles(fields[1]) : []
-	const mapRoles = roles.length === ids.length
-	const edges = ids.map((id, index) => {
-		const node: Record<string, unknown> = { id }
-		if (id.endsWith('@s.whatsapp.net')) {
-			node.pn = id.split('@')[0]
-		}
-
-		const edge: Record<string, unknown> = { node }
-		if (mapRoles) {
-			edge.role = roles[index]
-		}
-
-		return edge
-	})
-
-	return { followers: { edges } }
-}
-
-// The compact binary form of a pending-admin-invites answer starts
-// with the channel id; any invited users follow as concatenated
-// plain-text ids in the remaining fields. No ids after the channel
-// id means nobody is invited right now.
-export const decodeBinaryNewsletterInvites = (
-	content: BinaryNode['content']
-): Record<string, unknown> | null => {
-	if (!content || Array.isArray(content) || typeof content === 'string') {
-		return null
-	}
-
-	const fields = splitBinaryFieldsAny(Buffer.from(content))
-	if (!fields) {
-		return null
-	}
-
-	const channel = fields[0]!.toString('latin1')
-	if (!/^\d{6,}@newsletter$/.test(channel)) {
-		return null
-	}
-
-	const rest = fields
-		.slice(1)
-		.map(f => f.toString('latin1'))
-		.join('')
-	const ids = rest.match(BINARY_ID_PATTERN) ?? []
-	const invites = ids.map(id => {
-		const user: Record<string, unknown> = { id }
-		if (id.endsWith('@s.whatsapp.net')) {
-			user.pn = id.split('@')[0]
-		}
-
-		return { user }
-	})
-
-	return { pending_admin_invites: invites }
-}
-
 export const executeWMexQuery = async <T>(
 	variables: Record<string, unknown>,
 	queryId: string,
@@ -422,10 +292,9 @@ export const executeWMexQuery = async <T>(
 	if (child?.content) {
 		const data = parseWMexBody(child.content)
 		if (!data) {
-			// Binary payload instead of JSON. The newsletter lookups whose
-			// compact form is understood decode it here (with the channel
-			// id as the metadata lookup's last-resort fallback); every
-			// other query reports a clean parse failure.
+			// Binary payload instead of JSON. Only the newsletter metadata
+			// lookup may decode it (with the channel id as the last-resort
+			// fallback); every other query reports a clean parse failure.
 			if (dataPath === 'xwa2_newsletter_metadata') {
 				const decoded = decodeBinaryNewsletterMetadata(child.content)
 				if (decoded) {
@@ -435,20 +304,6 @@ export const executeWMexQuery = async <T>(
 				const id = recoverNewsletterId(child)
 				if (id) {
 					return { id } as T
-				}
-			}
-
-			if (dataPath === 'xwa2_newsletter_followers') {
-				const decoded = decodeBinaryNewsletterFollowers(child.content)
-				if (decoded) {
-					return decoded as T
-				}
-			}
-
-			if (dataPath === 'xwa2_newsletter_admin') {
-				const decoded = decodeBinaryNewsletterInvites(child.content)
-				if (decoded) {
-					return decoded as T
 				}
 			}
 
