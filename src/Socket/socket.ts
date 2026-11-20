@@ -420,35 +420,6 @@ export const makeSocket = (config: SocketConfig) => {
 	const { creds } = authState
 	// add transaction capability
 	const keys = addTransactionCapability(authState.keys, logger, transactionOpts)
-	const resolveUsername = async (handle: string, usernameKey?: string) => {
-		const username = handle.trim().replace(/^@/, '')
-		if (username.length < 4 || username.length > 30 || !/^[a-zA-Z][a-zA-Z0-9._]*$/.test(username)) {
-			throw new Boom('Invalid username', { statusCode: 400 })
-		}
-
-		if (usernameKey !== undefined && !/^\d{4}$/.test(usernameKey)) {
-			throw new Boom('Invalid username key: expected a 4-digit string', { statusCode: 400 })
-		}
-
-		const user = new USyncUser().withUsername(username)
-		if (usernameKey) {
-			user.withUsernameKey(usernameKey)
-		}
-
-		const usyncQuery = new USyncQuery().withContactProtocol().withUser(user)
-		const results = await executeUSyncQuery(usyncQuery)
-		if (!results) {
-			return null
-		}
-
-		const entry = results.list.find(a => !!a.id)
-		if (!entry) {
-			return null
-		}
-
-		return { jid: entry.id, lid: entry.lid as string | undefined }
-	}
-
 	const signalRepository = makeSignalRepository({ creds, keys }, logger, pnFromLIDUSync)
 
 	let lastDateRecv: Date
@@ -1284,7 +1255,6 @@ export const makeSocket = (config: SocketConfig) => {
 		sendWAMBuffer,
 		executeUSyncQuery,
 		onWhatsApp,
-		resolveUsername,
 		/** Resolve a phone-number JID to its linked-device LID using the persisted mapping/USync fallback. */
 		getLIDForPN: (pn: string) => signalRepository.lidMapping.getLIDForPN(pn),
 		/** Resolve a linked-device LID to its phone-number JID using the persisted mapping/USync fallback. */

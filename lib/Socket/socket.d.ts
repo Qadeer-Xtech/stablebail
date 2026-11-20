@@ -53,10 +53,6 @@ export declare const makeSocket: (config: SocketConfig) => {
         jid: string;
         exists: boolean;
     }[] | undefined>;
-    resolveUsername: (handle: string, usernameKey?: string) => Promise<{
-        jid: string;
-        lid: string | undefined;
-    } | null>;
     /** Resolve a phone-number JID to its linked-device LID using the persisted mapping/USync fallback. */
     getLIDForPN: (pn: string) => Promise<string | null>;
     /** Resolve a linked-device LID to its phone-number JID using the persisted mapping/USync fallback. */

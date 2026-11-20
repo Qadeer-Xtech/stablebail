@@ -229,10 +229,6 @@ export declare const makeMessagesRecvSocket: (config: SocketConfig) => {
         jid: string;
         exists: boolean;
     }[] | undefined>;
-    resolveUsername: (handle: string, usernameKey?: string) => Promise<{
-        jid: string;
-        lid: string | undefined;
-    } | null>;
     getLIDForPN: (pn: string) => Promise<string | null>;
     getPNForLID: (lid: string) => Promise<string | null>;
     fetchAccountReachoutTimelock: () => Promise<import("../Types/index.js").ReachoutTimelockState>;
