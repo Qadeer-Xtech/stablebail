@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@cacheable/node-cache": "1.7.6",
-    "@hapi/boom": "9.1.4",
+    "@hapi/boom": "10.0.1",
     "async-mutex": "0.5.0",
     "libsignal": "npm:@qadeer-xtech/libsignal@1.0.1",
     "lru-cache": "11.5.3",
