@@ -1557,6 +1557,26 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					} as BinaryNode)
 				}
 
+				// interactive (buttons / list / carousel) and legacy-buttons
+				// messages need the biz native_flow node, like WhatsApp Web sends
+				const isInteractiveMsg =
+					('buttons' in content && !!content.buttons) ||
+					('carousel' in content && !!content.carousel) ||
+					('legacyButtons' in content && !!content.legacyButtons)
+				if (isInteractiveMsg) {
+					additionalNodes.push({
+						tag: 'biz',
+						attrs: {},
+						content: [
+							{
+								tag: 'interactive',
+								attrs: { type: 'native_flow', v: '1' },
+								content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }]
+							}
+						]
+					} as BinaryNode)
+				}
+
 				await relayMessage(jid, fullMsg.message!, {
 					messageId: fullMsg.key.id!,
 					useCachedGroupMetadata: options.useCachedGroupMetadata,

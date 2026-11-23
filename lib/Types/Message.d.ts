@@ -109,6 +109,115 @@ export type EventMessageOptions = {
     extraGuestsAllowed?: boolean;
     messageSecret?: Uint8Array<ArrayBufferLike>;
 };
+export type WAListRow = {
+    /** small bold header shown above the row title */
+    header?: string;
+    title: string;
+    description?: string;
+    /** id sent back when the user taps this row */
+    id: string;
+};
+export type WAListSection = {
+    title?: string;
+    highlightLabel?: string;
+    rows: WAListRow[];
+};
+/**
+ * A native-flow button of an interactive (buttons) message.
+ * Any extra WhatsApp parameter can be passed through `params`;
+ * it is merged into the button's params JSON.
+ */
+export type WANativeFlowButton = {
+    type: 'reply';
+    displayText: string;
+    id: string;
+    params?: Record<string, unknown>;
+} | {
+    type: 'url';
+    displayText: string;
+    url: string;
+    webviewInteraction?: boolean;
+    params?: Record<string, unknown>;
+} | {
+    type: 'call';
+    displayText: string;
+    id?: string;
+    phoneNumber?: string;
+    params?: Record<string, unknown>;
+} | {
+    type: 'copy';
+    displayText: string;
+    copyCode: string;
+    params?: Record<string, unknown>;
+} | {
+    type: 'reminder';
+    displayText: string;
+    id: string;
+    params?: Record<string, unknown>;
+} | {
+    type: 'cancelReminder';
+    displayText: string;
+    id: string;
+    params?: Record<string, unknown>;
+} | {
+    type: 'address';
+    displayText: string;
+    id: string;
+    params?: Record<string, unknown>;
+} | {
+    type: 'location';
+    params?: Record<string, unknown>;
+} | {
+    type: 'list';
+    title?: string;
+    sections: WAListSection[];
+    params?: Record<string, unknown>;
+} | {
+    name: string;
+    params?: Record<string, unknown>;
+};
+/** One interactive card: body/footer/header + native-flow buttons */
+export type WAButtonsCard = {
+    text?: string;
+    footer?: string;
+    title?: string;
+    subtitle?: string;
+    image?: WAMediaUpload;
+    video?: WAMediaUpload;
+    document?: WAMediaUpload;
+    fileName?: string;
+    mimetype?: string;
+    buttons: WANativeFlowButton[];
+    /** native-flow message params, e.g. limited_time_offer, bottom_sheet, tap_target_configuration */
+    messageParams?: Record<string, unknown>;
+};
+export type ButtonsContent = WAButtonsCard;
+export type CarouselContent = {
+    text?: string;
+    footer?: string;
+    carousel: {
+        /** every card must carry image or video media in its header */
+        cards: WAButtonsCard[];
+    };
+};
+export type WALegacyButton = {
+    id: string;
+    displayText: string;
+};
+export type LegacyButtonsContent = {
+    text?: string;
+    footer?: string;
+    title?: string;
+    subtitle?: string;
+    image?: WAMediaUpload;
+    video?: WAMediaUpload;
+    document?: WAMediaUpload;
+    fileName?: string;
+    mimetype?: string;
+    /** jpeg thumbnail (Buffer or base64) for the location-style header used when no media is attached */
+    thumbnail?: string | Buffer;
+    legacyButtons: WALegacyButton[];
+};
 export type AlbumMessageOptions = {
     /** Number of images expected in the album */
     expectedImageCount?: number;
@@ -204,7 +313,7 @@ export type AnyRegularMessageContent = (({
     businessOwnerJid?: string;
     body?: string;
     footer?: string;
-} | SharePhoneNumber | RequestPhoneNumber) & ViewOnce;
+} | (ButtonsContent & Mentionable & Contextable) | (CarouselContent & Mentionable & Contextable) | (LegacyButtonsContent & Mentionable & Contextable) | SharePhoneNumber | RequestPhoneNumber) & ViewOnce;
 export type AnyMessageContent = AnyRegularMessageContent | {
     forward: WAMessage;
     force?: boolean;

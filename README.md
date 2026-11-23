@@ -333,6 +333,38 @@ const sock = makeWASocket({
 })
 ```
 
+### 7. Buttons & Lists (new in 1.1.3)
+
+Buttons and lists are built into the library — no extra helper
+files or packages. Just pass `buttons` to `sendMessage`:
+
+```js
+await sock.sendMessage(jid, {
+    text: 'Choose an option',
+    footer: 'Powered by Team Qadeer',
+    buttons: [
+        { type: 'reply', displayText: 'Yes', id: 'yes' },
+        { type: 'url', displayText: 'Website', url: 'https://example.com' },
+        { type: 'call', displayText: 'Call us', phoneNumber: '+923001234567' },
+        { type: 'copy', displayText: 'Copy code', copyCode: 'PROMO10' },
+        {
+            type: 'list',
+            title: 'Open menu',
+            sections: [
+                {
+                    title: 'Main',
+                    rows: [{ title: 'First item', description: 'Details', id: 'item_1' }]
+                }
+            ]
+        }
+    ]
+})
+```
+
+Also supported: image/video/document headers, carousels
+(`carousel: { cards: [...] }`), legacy buttons (`legacyButtons`),
+reminder buttons, and raw native-flow passthrough.
+
 ## 🚀 Basic Usage
 
 ```js

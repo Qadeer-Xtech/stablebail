@@ -1,6 +1,6 @@
 import { type Transform } from 'stream';
 import { proto } from '../../WAProto/index.js';
-import type { AnyMediaMessageContent, AnyMessageContent, MessageContentGenerationOptions, MessageGenerationOptions, MessageGenerationOptionsFromContent, MessageUserReceipt, WAMessage, WAMessageContent, WAMessageKey } from '../Types/index.js';
+import type { AnyMediaMessageContent, AnyMessageContent, MessageContentGenerationOptions, MessageGenerationOptions, MessageGenerationOptionsFromContent, MessageUserReceipt, WAButtonsCard, WAMessage, WAMessageContent, WAMessageKey, WANativeFlowButton } from '../Types/index.js';
 import type { ILogger } from './logger.js';
 import { type MediaDownloadOptions } from './messages-media.js';
 type ExtractByKey<T, K extends PropertyKey> = T extends Record<K, any> ? T : never;
@@ -20,6 +20,11 @@ export declare const prepareDisappearingMessageSettingContent: (ephemeralExpirat
  */
 export declare const generateForwardMessageContent: (message: WAMessage, forceForward?: boolean) => proto.IMessage;
 export declare const hasNonNullishProperty: <K extends PropertyKey>(message: AnyMessageContent, key: K) => message is ExtractByKey<AnyMessageContent, K>;
+type NativeFlowButtonProto = proto.Message.InteractiveMessage.NativeFlowMessage.INativeFlowButton;
+/** Convert one friendly button definition into its native-flow wire form. */
+export declare const buildNativeFlowButton: (btn: WANativeFlowButton) => NativeFlowButtonProto;
+/** Build one interactive card (body/footer/header + native-flow buttons). */
+export declare const buildInteractiveCard: (card: WAButtonsCard, options: MessageContentGenerationOptions) => Promise<proto.Message.IInteractiveMessage>;
 export declare const generateWAMessageContent: (message: AnyMessageContent, options: MessageContentGenerationOptions) => Promise<proto.Message>;
 export declare const generateWAMessageFromContent: (jid: string, message: WAMessageContent, options: MessageGenerationOptionsFromContent) => WAMessage;
 export declare const generateWAMessage: (jid: string, content: AnyMessageContent, options: MessageGenerationOptions) => Promise<WAMessage>;

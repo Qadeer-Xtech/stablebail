@@ -20,10 +20,12 @@ import type {
 	MessageGenerationOptionsFromContent,
 	MessageUserReceipt,
 	MessageWithContextInfo,
+	WAButtonsCard,
 	WAMediaUpload,
 	WAMessage,
 	WAMessageContent,
 	WAMessageKey,
+	WANativeFlowButton,
 	WATextMessage
 } from '../Types'
 import { WAMessageStatus, WAProto } from '../Types'
@@ -395,12 +397,188 @@ function hasOptionalProperty<T, K extends PropertyKey>(obj: T, key: K): obj is W
 	return typeof obj === 'object' && obj !== null && key in obj && (obj as any)[key] !== null
 }
 
+type NativeFlowButtonProto = proto.Message.InteractiveMessage.NativeFlowMessage.INativeFlowButton
+
+/** Convert one friendly button definition into its native-flow wire form. */
+export const buildNativeFlowButton = (btn: WANativeFlowButton): NativeFlowButtonProto => {
+	if (!('type' in btn)) {
+		// raw passthrough: caller supplies the native-flow name + params
+		return { name: btn.name, buttonParamsJson: JSON.stringify(btn.params || {}) }
+	}
+
+	switch (btn.type) {
+		case 'reply':
+			return {
+				name: 'quick_reply',
+				buttonParamsJson: JSON.stringify({ display_text: btn.displayText, id: btn.id, ...(btn.params || {}) })
+			}
+		case 'url':
+			return {
+				name: 'cta_url',
+				buttonParamsJson: JSON.stringify({
+					display_text: btn.displayText,
+					url: btn.url,
+					webview_interaction: !!btn.webviewInteraction,
+					...(btn.params || {})
+				})
+			}
+		case 'call':
+			return {
+				name: 'cta_call',
+				buttonParamsJson: JSON.stringify({
+					display_text: btn.displayText,
+					...(btn.id ? { id: btn.id } : {}),
+					...(btn.phoneNumber ? { phone_number: btn.phoneNumber } : {}),
+					...(btn.params || {})
+				})
+			}
+		case 'copy':
+			return {
+				name: 'cta_copy',
+				buttonParamsJson: JSON.stringify({
+					display_text: btn.displayText,
+					copy_code: btn.copyCode,
+					...(btn.params || {})
+				})
+			}
+		case 'reminder':
+			return {
+				name: 'cta_reminder',
+				buttonParamsJson: JSON.stringify({ display_text: btn.displayText, id: btn.id, ...(btn.params || {}) })
+			}
+		case 'cancelReminder':
+			return {
+				name: 'cta_cancel_reminder',
+				buttonParamsJson: JSON.stringify({ display_text: btn.displayText, id: btn.id, ...(btn.params || {}) })
+			}
+		case 'address':
+			return {
+				name: 'address_message',
+				buttonParamsJson: JSON.stringify({ display_text: btn.displayText, id: btn.id, ...(btn.params || {}) })
+			}
+		case 'location':
+			return {
+				name: 'send_location',
+				buttonParamsJson: JSON.stringify({ ...(btn.params || {}) })
+			}
+		case 'list':
+			return {
+				name: 'single_select',
+				buttonParamsJson: JSON.stringify({
+					title: btn.title || '',
+					sections: btn.sections.map(section => ({
+						title: section.title || '',
+						highlight_label: section.highlightLabel || '',
+						rows: section.rows.map(row => ({
+							header: row.header || '',
+							title: row.title,
+							description: row.description || '',
+							id: row.id
+						}))
+					})),
+					...(btn.params || {})
+				})
+			}
+		default:
+			throw new Boom('Invalid button type', { statusCode: 400 })
+	}
+}
+
+/** Build one interactive card (body/footer/header + native-flow buttons). */
+export const buildInteractiveCard = async (
+	card: WAButtonsCard,
+	options: MessageContentGenerationOptions
+): Promise<proto.Message.IInteractiveMessage> => {
+	let media: WAMessageContent = {}
+	let hasMedia = false
+	if (card.image) {
+		media = await prepareWAMessageMedia({ image: card.image }, options)
+		hasMedia = true
+	} else if (card.video) {
+		media = await prepareWAMessageMedia({ video: card.video }, options)
+		hasMedia = true
+	} else if (card.document) {
+		media = await prepareWAMessageMedia(
+			{ document: card.document, fileName: card.fileName, mimetype: card.mimetype } as AnyMediaMessageContent,
+			options
+		)
+		hasMedia = true
+	}
+
+	return {
+		body: { text: card.text || '' },
+		...(card.footer ? { footer: { text: card.footer } } : {}),
+		header: {
+			...(card.title ? { title: card.title } : {}),
+			...(card.subtitle ? { subtitle: card.subtitle } : {}),
+			hasMediaAttachment: hasMedia,
+			...media
+		},
+		nativeFlowMessage: {
+			messageParamsJson: JSON.stringify(card.messageParams || {}),
+			buttons: card.buttons.map(buildNativeFlowButton)
+		}
+	}
+}
+
 export const generateWAMessageContent = async (
 	message: AnyMessageContent,
 	options: MessageContentGenerationOptions
 ) => {
 	let m: WAMessageContent = {}
-	if (hasNonNullishProperty(message, 'text')) {
+	if (hasNonNullishProperty(message, 'buttons')) {
+		m.interactiveMessage = await buildInteractiveCard(message, options)
+	} else if (hasNonNullishProperty(message, 'carousel')) {
+		const cards: proto.Message.IInteractiveMessage[] = []
+		for (const card of message.carousel.cards) {
+			cards.push(await buildInteractiveCard(card, options))
+		}
+
+		m.interactiveMessage = {
+			header: { hasMediaAttachment: false },
+			body: { text: message.text || '' },
+			...(message.footer ? { footer: { text: message.footer } } : {}),
+			carouselMessage: { cards }
+		}
+	} else if (hasNonNullishProperty(message, 'legacyButtons')) {
+		let media: WAMessageContent | undefined
+		if (message.image) {
+			media = await prepareWAMessageMedia({ image: message.image }, options)
+		} else if (message.video) {
+			media = await prepareWAMessageMedia({ video: message.video }, options)
+		} else if (message.document) {
+			media = await prepareWAMessageMedia(
+				{ document: message.document, fileName: message.fileName, mimetype: message.mimetype } as AnyMediaMessageContent,
+				options
+			)
+		}
+
+		m.buttonsMessage = {
+			contentText: message.text || '',
+			footerText: message.footer || '',
+			buttons: message.legacyButtons.map(btn => ({
+				buttonId: btn.id,
+				buttonText: { displayText: btn.displayText },
+				type: 1
+			})),
+			...(media
+				? media
+				: {
+						headerType: 6,
+						locationMessage: {
+							degreesLatitude: 0,
+							degreesLongitude: 0,
+							name: message.title || '',
+							address: message.subtitle || '',
+							jpegThumbnail: message.thumbnail
+								? Buffer.isBuffer(message.thumbnail)
+									? message.thumbnail
+									: Buffer.from(message.thumbnail, 'base64')
+								: undefined
+						}
+					})
+		}
+	} else if (hasNonNullishProperty(message, 'text')) {
 		const extContent = { text: message.text } as WATextMessage
 
 		let urlInfo = message.linkPreview
