@@ -62,7 +62,7 @@
     "conventional-changelog": "^7.1.1",
     "conventional-changelog-angular": "^8.0.0",
     "esbuild-register": "^3.6.0",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.4.0",
     "jest": "^30.0.5",
